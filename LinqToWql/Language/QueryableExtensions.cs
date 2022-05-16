@@ -4,32 +4,12 @@ using System.Reflection;
 namespace LinqToWql.Language;
 
 public static class QueryableExtensions {
-  public static readonly MethodInfo WithinMethodInfo = typeof(QueryableExtensions)
-                                                       .GetTypeInfo()
-                                                       .GetDeclaredMethods(nameof(Within))
-                                                       .Single();
-
-  public static readonly MethodInfo AssociatorsOfMethodInfo = typeof(QueryableExtensions)
-                                                              .GetTypeInfo()
-                                                              .GetDeclaredMethods(nameof(AssociatorsOf))
-                                                              .Single();
-
-  public static readonly MethodInfo HavingMethodInfo = typeof(QueryableExtensions)
-                                                       .GetTypeInfo()
-                                                       .GetDeclaredMethods(nameof(Having))
-                                                       .Single();
-
-  public static readonly MethodInfo OrMethodInfo = typeof(QueryableExtensions)
-                                                   .GetTypeInfo()
-                                                   .GetDeclaredMethods(nameof(Or))
-                                                   .Single();
-
   /// <summary>
   ///   A polyfill property for the WQL __CLASS Identifier.
   ///   https://docs.microsoft.com/en-us/windows/win32/wmisdk/--class-identifier
   /// </summary>
   // ReSharper disable once InconsistentNaming
-  public static readonly object __CLASS = new();
+  public static readonly object __CLASS = new StubToString("__CLASS");
   
   /// <summary>
   ///   https://docs.microsoft.com/en-us/windows/win32/wmisdk/within-clause
@@ -46,25 +26,6 @@ public static class QueryableExtensions {
         null,
         GetMethodInfo(Within, source, timeoutInSeconds),
         new[] {source.Expression, Expression.Constant(timeoutInSeconds)}
-      ));
-  }
-
-  /// <summary>
-  ///   https://docs.microsoft.com/en-us/windows/win32/wmisdk/associators-of-statement
-  /// </summary>
-  /// <param name="source"></param>
-  /// <param name="objectPath"></param>
-  /// <typeparam name="TSource"></typeparam>
-  // ReSharper disable once IdentifierTypo
-  public static IQueryable<TSource> AssociatorsOf<TSource>(
-    this IQueryable<TSource> source,
-    string objectPath
-  ) {
-    return source.Provider.CreateQuery<TSource>(
-      Expression.Call(
-        null,
-        GetMethodInfo(AssociatorsOf, source, objectPath),
-        new[] {source.Expression, Expression.Constant(objectPath)}
       ));
   }
 
@@ -92,13 +53,15 @@ public static class QueryableExtensions {
   /// </summary>
   /// <param name="source"></param>
   /// <typeparam name="TSource"></typeparam>
-  public static IQueryable<TSource> Or<TSource>(
-    this IQueryable<TSource> source
+  public static IQueryable<TSource> OrWhere<TSource>(
+    this IQueryable<TSource> source,
+    Expression<Func<TSource, bool>> predicate
   ) {
     return source.Provider.CreateQuery<TSource>(
       Expression.Call(
         null,
-        GetMethodInfo(Or, source)
+        GetMethodInfo(OrWhere, source, predicate),
+        new[] {source.Expression, Expression.Quote(predicate)}
       ));
   }
 
@@ -114,4 +77,16 @@ public static class QueryableExtensions {
   }
 
   #endregion
+}
+
+internal struct StubToString {
+  private readonly string _stringValue;
+
+  public StubToString(string stringValue = "") {
+    _stringValue = stringValue;
+  }
+  
+  public override string ToString() {
+    return _stringValue;
+  }
 }

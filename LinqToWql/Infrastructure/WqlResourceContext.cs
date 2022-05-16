@@ -1,10 +1,16 @@
-﻿namespace LinqToWql; 
+﻿using System.Collections;
 
-public abstract class WqlResourceContext {
+namespace LinqToWql.Infrastructure; 
+
+public abstract class WqlResourceContext : IWqlResourceContext {
   protected object Connection;
   
   public WqlResourceContext(object connection) {
     Connection = connection;
+  }
+
+  public IEnumerable InvokeQuery(string query) {
+    throw new NotImplementedException();
   }
 }
 

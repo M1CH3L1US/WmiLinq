@@ -1,8 +1,4 @@
-﻿using System.Linq.Expressions;
-using System.Text;
-using Microsoft.EntityFrameworkCore.Metadata.Internal;
-
-namespace LinqToWql.Language.Expressions; 
+﻿namespace LinqToWql.Language.Expressions; 
 
 public class IsAWqlExpression : WqlExpression {
   public string ComparisonType;

@@ -11,6 +11,8 @@ public class ConstantWqlExpression : WqlExpression {
     return Value switch {
       null => "NULL",
       string => @$"""{Value}""",
+      false => "FALSE",
+      true => "TRUE",
       _ => Value.ToString()
     } ?? string.Empty;
   }

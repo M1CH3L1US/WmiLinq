@@ -6,16 +6,16 @@ namespace LinqToWql.Language;
 public class WqlExpressionVisitor : QueryableExpressionVisitor {
   private readonly SqlExpressionFactory _factory = new ();
 
-  protected override Expression TranslateWhere(Expression expression, LambdaExpression lambda) {
-    return _factory.MakeWhereExpression(expression, lambda);
+  protected override Expression TranslateOrWhere(Expression source, LambdaExpression lambdaExpression) {
+    return _factory.MakeWhereExpression(source, lambdaExpression, ExpressionChainType.Or);
+  }
+
+  protected override Expression TranslateWhere(Expression source, LambdaExpression lambda) {
+    return _factory.MakeWhereExpression(source, lambda, ExpressionChainType.And);
   }
   
-  protected override Expression TranslateSelect(Expression expression, LambdaExpression lambda) {
-    return _factory.MakeSelectExpression(expression, lambda);
-  }
-  
-  protected override Expression TranslateOr(Expression source) {
-    throw new NotImplementedException();
+  protected override Expression TranslateSelect(Expression source, LambdaExpression lambda) {
+    return _factory.MakeSelectExpression(source, lambda);
   }
   
   protected override Expression TranslateWithin(Expression source, ConstantExpression timeout) {

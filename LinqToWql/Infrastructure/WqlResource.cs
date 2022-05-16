@@ -3,7 +3,7 @@ using System.Linq.Expressions;
 using System.Reflection;
 using LinqToWql.Model;
 
-namespace LinqToWql;
+namespace LinqToWql.Infrastructure;
 
 public class WqlResource<T> : IQueryable<T> {
   public Type ElementType => typeof(T);

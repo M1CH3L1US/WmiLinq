@@ -1,16 +1,17 @@
 ﻿using System.Linq.Expressions;
 using System.Reflection;
+using LinqToWql.Infrastructure;
 using LinqToWql.Language;
 
 namespace LinqToWql; 
 
 public class WqlQueryProvider : IQueryProvider {
-  private IQueryCompiler _compiler;
+  private IWqlQueryRunner _runner;
   private static readonly MethodInfo _createQueryMethod = GetGenericMethod(nameof(CreateQuery));
   private static readonly MethodInfo _executeMethod = GetGenericMethod(nameof(CreateQuery));
   
-  public WqlQueryProvider(IQueryCompiler queryCompiler) {
-    _compiler = queryCompiler;
+  public WqlQueryProvider(IWqlQueryRunner wqlQueryRunner) {
+    _runner = wqlQueryRunner;
   }
   
   public IQueryable CreateQuery(Expression expression) {
@@ -28,7 +29,7 @@ public class WqlQueryProvider : IQueryProvider {
   }
 
   public T Execute<T>(Expression expression) {
-    return _compiler.Execute<T>(expression);
+    return _runner.Execute<T>(expression);
   }
 
   private static MethodInfo GetGenericMethod(string name) {

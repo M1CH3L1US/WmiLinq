@@ -1,6 +1,4 @@
 ﻿using System.Linq.Expressions;
-using System.Reflection.Metadata;
-using Microsoft.EntityFrameworkCore.Query;
 
 namespace LinqToWql.Language;
 
@@ -29,22 +27,19 @@ public abstract class QueryableExpressionVisitor : ExpressionVisitor {
     }
     
     var sourceExpr = Visit(methodCallExpression.Arguments[0]);
-    var genericMethod = method.IsGenericMethod ? method.GetGenericMethodDefinition() : null;
 
-    return genericMethod switch {
+    return method.Name switch {
       // Custom methods
-      _ when genericMethod == QueryableExtensions.HavingMethodInfo =>
+      nameof(QueryableExtensions.Having) =>
         TranslateHaving(sourceExpr, GetLambdaExpressionFromArgument(1)),
-      _ when genericMethod == QueryableExtensions.WithinMethodInfo =>
+      nameof(QueryableExtensions.Within) =>
         TranslateWithin(sourceExpr, GetConstExpressionFromArgument(1)),
-     // _ when genericMethod == QueryableExtensions.AssociatorsOfMethodInfo =>
-     //   TranslateAssociatorsOf(sourceExpr, GetConstExpressionFromArgument(1)),
-      _ when genericMethod == QueryableExtensions.OrMethodInfo =>
-        TranslateOr(sourceExpr),
+      nameof(QueryableExtensions.OrWhere) =>
+        TranslateOrWhere(sourceExpr, GetLambdaExpressionFromArgument(1)),
       //
-      _ when genericMethod == QueryableMethods.Where =>
+      nameof(Queryable.Where) =>
         TranslateWhere(sourceExpr, GetLambdaExpressionFromArgument(1)),
-      _ when genericMethod == QueryableMethods.Select =>
+      nameof(Queryable.Select) =>
         TranslateSelect(sourceExpr, GetLambdaExpressionFromArgument(1)),
       _ => null!,
     };
@@ -55,7 +50,7 @@ public abstract class QueryableExpressionVisitor : ExpressionVisitor {
       _ => base.VisitExtension(expression)
     };
   }
-    
+  protected abstract Expression TranslateOrWhere(Expression soruce, LambdaExpression lambdaExpression);
   protected abstract Expression TranslateWhere(Expression source, LambdaExpression lambdaExpression);
   protected abstract Expression TranslateSelect(Expression expression, LambdaExpression lambdaExpression);
   
@@ -63,8 +58,6 @@ public abstract class QueryableExpressionVisitor : ExpressionVisitor {
 
   protected abstract Expression TranslateWithin(Expression source, ConstantExpression timeout);
   protected abstract Expression TranslateHaving(Expression source, LambdaExpression predicate);
-  protected abstract Expression TranslateOr(Expression source);
-  // protected abstract Expression TranslateIsA(Expression source, ConstantExpression comparisonType);
   // protected abstract Expression TranslateAssociatorsOf(Expression source, ConstantExpression objectPath);
 
   #endregion

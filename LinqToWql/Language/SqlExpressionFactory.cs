@@ -1,17 +1,22 @@
 ﻿using System.Linq.Expressions;
 using LinqToWql.Language.Expressions;
+using LinqToWql.Language.Statements;
 
 namespace LinqToWql.Language;
 
 public class SqlExpressionFactory {
-  public WhereWqlExpression MakeWhereExpression(Expression source, LambdaExpression expression) {
+  public WhereWqlExpression MakeWhereExpression(
+    Expression source,
+    LambdaExpression expression,
+    ExpressionChainType chainType
+    ) {
     var inner = GetInnerExpressionFromLambda(expression);
-    return new WhereWqlExpression(source, inner);
+    return new WhereWqlExpression(source, inner, chainType);
   }
   
   public Expression MakeSelectExpression(Expression source, LambdaExpression lambda) {
     var selectProperty = GetInnerMemberAccessFromLambda(lambda);
-    return new SelectWqlExpression(source, selectProperty);
+    return new SelectWqlStatement(source, selectProperty);
   }
 
   private WqlExpression GetInnerExpressionFromLambda(LambdaExpression lambda) {
@@ -20,7 +25,7 @@ public class SqlExpressionFactory {
     }
 
     if(lambda.Body is BinaryExpression binary) {
-      return GetInnerBinaryFromLambda(lambda, binary);
+      return ConvertToBinaryWqlExpression(binary);
     }
 
     throw new NotSupportedException();
@@ -35,7 +40,19 @@ public class SqlExpressionFactory {
       return new ConstantWqlExpression(constant.Value);
     }
 
+    if (expression is BinaryExpression binary) {
+      return ConvertToBinaryWqlExpression(binary);
+    }
+
     throw new NotSupportedException();
+  }
+  
+  private BinaryWqlExpression ConvertToBinaryWqlExpression(BinaryExpression binary) {
+    var left = ConvertToWqlExpression(binary.Left);
+    var right = ConvertToWqlExpression(binary.Right);
+    var op = binary.NodeType;
+    
+    return new BinaryWqlExpression(left, op, right);
   }
 
   private List<PropertyWqlExpression> GetInnerMemberAccessFromLambda(LambdaExpression lambda) {
@@ -70,13 +87,5 @@ public class SqlExpressionFactory {
         new LikeWqlExpression(propertyName, (string)argument.Value!),
       _ => throw new NotImplementedException()
     };
-  }
-  
-  private BinaryWqlExpression GetInnerBinaryFromLambda(LambdaExpression lambda, BinaryExpression binary) {
-    var left = ConvertToWqlExpression(binary.Left);
-    var right = ConvertToWqlExpression(binary.Right);
-    var op = binary.NodeType;
-    
-    return new BinaryWqlExpression(left, op, right);
   }
 }

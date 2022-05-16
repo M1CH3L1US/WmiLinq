@@ -1,11 +1,13 @@
 ﻿namespace LinqToWql.Model; 
 
 public struct WqlResourceProperty<T> {
+  public T Value { get; }
+  
   public WqlResourceProperty(T value) {
     Value = value;
   }
-
-  public T Value { get; }
+  
+  public static implicit operator WqlResourceProperty<T> (T value) => new (value);
   
   public static bool operator == (WqlResourceProperty<T> @this, T compare) {
     return @this.Value?.Equals(compare) ?? false;

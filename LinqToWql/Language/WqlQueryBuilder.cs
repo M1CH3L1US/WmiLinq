@@ -1,14 +1,19 @@
 ﻿using System.Linq.Expressions;
 using System.Text;
+using LinqToWql.Infrastructure;
 using LinqToWql.Language.Expressions;
+using LinqToWql.Language.Statements;
 
 namespace LinqToWql.Language;
 
 public class WqlQueryBuilder {
   private readonly StringBuilder _query = new();
-  private readonly List<SelectWqlExpression> _selectExpressions = new();
-
   private readonly WqlStatement _source;
+
+  // We could make this a generic list of WqlStatements and
+  // handle the string building in the WqlStatement class, but
+  // this isn't worth the effort for this.
+  private readonly List<SelectWqlStatement> _selectExpressions = new();
   private readonly List<WhereWqlExpression> _whereExpressions = new();
 
   public ConstantExpression WqlResourceExpression { get; set; }
@@ -34,7 +39,7 @@ public class WqlQueryBuilder {
 
     while (statement is WqlStatement wqlStatement) {
       switch (wqlStatement) {
-        case SelectWqlExpression selectStatement:
+        case SelectWqlStatement selectStatement:
           _selectExpressions.Add(selectStatement);
           break;
         case WhereWqlExpression whereStatement:
@@ -59,10 +64,12 @@ public class WqlQueryBuilder {
 
     foreach (var whereExpression in _whereExpressions) {
       var str = whereExpression.InnerExpression.ToWqlString();
-      _query.Append(str);
+      _query.AppendLine(str);
 
+      // Don't include the chain operator if this is the last expression
       if (_whereExpressions.IndexOf(whereExpression) != _whereExpressions.Count - 1) {
-        _query.Append(" AND ");
+        var chainOperator = whereExpression.ChainType.ToString().ToUpper();
+        _query.Append($"{chainOperator} ");
       }
     }
   }
