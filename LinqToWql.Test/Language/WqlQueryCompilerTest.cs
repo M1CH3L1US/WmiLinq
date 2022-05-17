@@ -8,6 +8,7 @@ namespace LinqToWql.Test.Language;
 
 public class WqlQueryCompilerTest {
   private const string NewLine = "\r\n";
+
   private static readonly WqlResource<SmsCollection> _resource = StubResourceFactory.Create<SmsCollection>();
 
   [Fact]
@@ -30,7 +31,7 @@ public class WqlQueryCompilerTest {
                     + NewLine +
                     "WHERE Name = \"Test\""
                     + NewLine +
-                    "OR CollectionID = \"1-100-10\" AND Description = \"Test\""
+                    "OR CollectionId = \"1-100-10\" AND Description = \"Test\""
                     + NewLine);
   }
 }

@@ -1,7 +1,7 @@
 <Project Sdk="Microsoft.NET.Sdk">
 
     <PropertyGroup>
-        <TargetFramework>net7.0</TargetFramework>
+        <TargetFramework>net6.0</TargetFramework>
         <ImplicitUsings>enable</ImplicitUsings>
         <Nullable>enable</Nullable>
 
@@ -27,9 +27,21 @@
         <ProjectReference Include="..\LinqToWql\LinqToWql.csproj" />
     </ItemGroup>
 
+    <ItemGroup>
+        <ProjectReference OutputItemType="Analyzer" Include="..\LinqToWql.CodeGen\LinqToWql.CodeGen.csproj" />
+    </ItemGroup>
 
     <ItemGroup>
         <Folder Include="Infrastructure" />
+    </ItemGroup>
+
+    <ItemGroup>
+      <Reference Include="AdminUI.WqlQueryEngine">
+        <HintPath>..\ref\WqlQueryEngine.dll</HintPath>
+      </Reference>
+      <Reference Include="Microsoft.ConfigurationManagement.ManagementProvider">
+        <HintPath>..\ref\Microsoft.ConfigurationManagement.ManagementProvider.dll</HintPath>
+      </Reference>
     </ItemGroup>
 
 </Project>

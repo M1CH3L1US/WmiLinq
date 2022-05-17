@@ -1,15 +1,15 @@
 ﻿using System.Collections;
 using LinqToWql.Infrastructure;
 
-namespace LinqToWql.Test.Mocks; 
+namespace LinqToWql.Test.Mocks;
 
 public class StubWqlResourceContext : IWqlResourceContext {
   public IEnumerable InvokeQuery(string query) {
-    return new List<SmsCollection>() {
-       new SmsCollection {
+    return new List<SmsCollection> {
+      new() /*{
         Name = "TestSmsCollection",
         Description = "Test SMS Collection",
-      }
+      }*/
     };
   }
 }
