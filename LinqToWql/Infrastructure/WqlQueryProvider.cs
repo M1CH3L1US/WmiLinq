@@ -28,24 +28,7 @@ public class WqlQueryProvider : IQueryProvider {
   }
 
   public T Execute<T>(Expression expression) {
-    // T is either TSource of IQueryable or IEnumerator<T> if
-    // invoked through IQueryableProvider.Execute
-    if (IsQueryResultEnumerator<T>()) {
-      var queryResultType = typeof(T).GetGenericArguments().First()!;
-      return (T) _runner.Execute(expression, queryResultType);
-    }
-
-    var result = _runner.Execute<T>(expression);
-    return result;
-  }
-
-  private bool IsQueryResultEnumerator<T>() {
-    var resultType = typeof(T);
-    if (!resultType.IsGenericType) {
-      return false;
-    }
-
-    return resultType.GetGenericTypeDefinition() == typeof(IEnumerator<>);
+    return _runner.Execute<T>(expression);
   }
 
   private static MethodInfo GetGenericMethod(string name) {

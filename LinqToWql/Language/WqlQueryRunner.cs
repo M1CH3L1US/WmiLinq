@@ -1,5 +1,4 @@
-﻿using System.Collections;
-using System.Linq.Expressions;
+﻿using System.Linq.Expressions;
 using LinqToWql.Infrastructure;
 using LinqToWql.Language.Expressions;
 
@@ -10,11 +9,6 @@ public class WqlQueryRunner : IWqlQueryRunner {
 
   public WqlQueryRunner(WqlResourceContext context) {
     _queryProcessor = context.QueryProcessor;
-  }
-
-  public IEnumerable Execute(Expression query, Type queryResultType) {
-    var queryString = MakeQueryString(query, out var parseOptions);
-    return _queryProcessor.ExecuteQuery(queryString, parseOptions);
   }
 
   public T Execute<T>(Expression query) {

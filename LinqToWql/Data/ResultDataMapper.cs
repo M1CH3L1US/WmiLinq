@@ -15,7 +15,7 @@ public class ResultDataMapper {
     _resourceType = parseOptions.ResourceType;
   }
 
-  public object Map() {
+  public object ApplyTypeMapping() {
     var resource = MapToResource();
 
     if (_parseOptions.ShouldSelectSingleProperty) {

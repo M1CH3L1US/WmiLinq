@@ -24,7 +24,7 @@ public class WqlQueryCompilerTest {
     var context = new StubWqlResourceContext(options);
     var sut = new WqlQueryRunner(context);
 
-    sut.Execute(q.Expression, typeof(SmsCollection));
+    sut.Execute<SmsCollection>(q.Expression);
 
     var arg = processor.Invocations.First().Arguments.First();
 
