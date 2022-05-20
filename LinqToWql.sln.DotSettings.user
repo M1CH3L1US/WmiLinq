@@ -1,10 +1,13 @@
 ﻿<wpf:ResourceDictionary xml:space="preserve" xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml" xmlns:s="clr-namespace:System;assembly=mscorlib" xmlns:ss="urn:shemas-jetbrains-com:settings-storage-xaml" xmlns:wpf="http://schemas.microsoft.com/winfx/2006/xaml/presentation">
+	<s:Boolean x:Key="/Default/AddReferences/RecentPaths/=C_003A_005CProgram_0020Files_005Cdotnet_005Cshared_005CMicrosoft_002EWindowsDesktop_002EApp_005C6_002E0_002E5_005CSystem_002EWindows_002EForms_002Edll/@EntryIndexedValue">True</s:Boolean>
+	<s:Boolean x:Key="/Default/AddReferences/RecentPaths/=C_003A_005CProgram_0020Files_005Cdotnet_005Cshared_005CMicrosoft_002EWindowsDesktop_002EApp_005C7_002E0_002E0_002Dpreview_002E2_002E22153_002E5_005CSystem_002EWindows_002EForms_002Edll/@EntryIndexedValue">True</s:Boolean>
 	<s:Boolean x:Key="/Default/AddReferences/RecentPaths/=C_003A_005CUsers_005Cleaf_005CDownloads_005COneDrive_005F2_005F5_002D16_002D2022_005CMicrosoft_002EConfigurationManagement_002EManagementProvider_002Edll/@EntryIndexedValue">True</s:Boolean>
 	<s:Boolean x:Key="/Default/AddReferences/RecentPaths/=C_003A_005CUsers_005Cleaf_005CDownloads_005COneDrive_005F2_005F5_002D16_002D2022_005CWqlQueryEngine_002Edll/@EntryIndexedValue">True</s:Boolean>
 	<s:Boolean x:Key="/Default/AddReferences/RecentPaths/=F_003A_005CProgramming_005Ccs_005CLinqToWql_005Cref_005CMicrosoft_002EConfigurationManagement_002EManagementProvider_002Edll/@EntryIndexedValue">True</s:Boolean>
 	<s:Boolean x:Key="/Default/AddReferences/RecentPaths/=F_003A_005CProgramming_005Ccs_005CLinqToWql_005Cref_005CWqlQueryEngine_002Edll/@EntryIndexedValue">True</s:Boolean>
 	<s:String x:Key="/Default/Environment/AssemblyExplorer/XmlDocument/@EntryValue">&lt;AssemblyExplorer&gt;&#xD;
   &lt;Assembly Path="F:\Programming\cs\LinqToWql\LinqToWql.CodeGen\bin\Debug\net7.0\LinqToWql.CodeGen.dll" /&gt;&#xD;
+  &lt;Assembly Path="C:\Program Files\dotnet\shared\Microsoft.WindowsDesktop.App\7.0.0-preview.2.22153.5\System.Windows.Forms.dll" /&gt;&#xD;
 &lt;/AssemblyExplorer&gt;</s:String>
 	
 	<s:String x:Key="/Default/Environment/UnitTesting/UnitTestSessionStore/Sessions/=7e50d5e5_002D2bd3_002D4135_002Da6da_002D927c03baff9d/@EntryIndexedValue">&lt;SessionState ContinuousTestingIsOn="True" ContinuousTestingMode="1" IsActive="True" Name="All tests from &amp;lt;LinqToWql.Test&amp;gt;" xmlns="urn:schemas-jetbrains-com:jetbrains-ut-session"&gt;&#xD;

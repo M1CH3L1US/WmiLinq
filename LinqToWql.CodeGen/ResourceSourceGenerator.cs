@@ -54,8 +54,8 @@ public class ResourceSourceGenerator : ISourceGenerator {
 
   private void AddResourceDataImpl(StringBuilder resource, ITypeSymbol classModel) {
     resource.AppendLine(
-      $"public {classModel.Name}(IResultObject resource, ConnectionManagerBase connection) : base(resource, connection) {{  }}");
-    resource.AppendLine($"public {classModel.Name}() : base(null, null) {{  }}");
+      $"public {classModel.Name}(IResultObject resource) : base(resource) {{  }}");
+    resource.AppendLine($"public {classModel.Name}() : base(null) {{  }}");
   }
 
   private void AddPropertyMapping(StringBuilder resource, ITypeSymbol classModel) {
@@ -104,13 +104,13 @@ public class ResourceSourceGenerator : ISourceGenerator {
 
       if (isArray) {
         resource.AppendLine(
-          $@"get => new WqlResourceProperty<{propertyType}>(_resource[""{propertyName}""].ObjectArrayValue.Cast<{propertyGenericType}>());");
+          $@"get => new WqlResourceProperty<{propertyType}>(Resource[""{propertyName}""].ObjectArrayValue.Cast<{propertyGenericType}>());");
         resource.AppendLine(
-          $@"set => _resource[""{propertyName}""].ObjectArrayValue = value.Value.Cast<object>().ToArray();");
+          $@"set => Resource[""{propertyName}""].ObjectArrayValue = value.Value.Cast<object>().ToArray();");
       }
       else {
-        resource.AppendLine($@"get => ({propertyType}) _resource[""{propertyName}""].ObjectValue;");
-        resource.AppendLine($@"set => _resource[""{propertyName}""].ObjectValue = value;");
+        resource.AppendLine($@"get => ({propertyType}) Resource[""{propertyName}""].ObjectValue;");
+        resource.AppendLine($@"set => Resource[""{propertyName}""].ObjectValue = value;");
       }
 
       resource.AppendLine("}");

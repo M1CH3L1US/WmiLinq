@@ -3,25 +3,23 @@
 namespace LinqToWql.Model;
 
 public abstract class WqlResourceData {
-  protected ConnectionManagerBase _connectionManager;
-  protected IResultObject _resource;
+  protected readonly IResultObject Resource;
 
-  public WqlResourceData(IResultObject resource, ConnectionManagerBase connectionManager) {
-    _resource = resource;
-    _connectionManager = connectionManager;
+  public WqlResourceData(IResultObject resource) {
+    Resource = resource;
   }
 
-  public IResultObject ExecuteMethod(string command, params Tuple<string, dynamic>[] args) {
-    var dictArgs = args.ToDictionary(x => x.Item1, x => x.Item2);
-    return _resource.ExecuteMethod(command, dictArgs);
+  protected IResultObject ExecuteMethod(string command, params Tuple<string, dynamic>[] args) {
+    var dictArgs = args.ToDictionary(x => x.Item1, x => (object) x.Item2);
+    return Resource.ExecuteMethod(command, dictArgs);
   }
 
-  public Tuple<string, dynamic> Parameter(string name, dynamic value) {
+  protected Tuple<string, dynamic> Parameter(string name, dynamic value) {
     return new Tuple<string, dynamic>(name, value);
   }
 
   public void Update() {
-    _resource.Put();
-    _resource.Get();
+    Resource.Put();
+    Resource.Get();
   }
 }

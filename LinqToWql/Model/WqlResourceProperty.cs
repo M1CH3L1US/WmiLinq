@@ -1,6 +1,36 @@
-﻿namespace LinqToWql.Model;
+﻿using System.Collections;
 
-public struct WqlResourceProperty<T> {
+namespace LinqToWql.Model;
+
+public readonly struct WqlResourceProperty<T> : IEnumerable<T> {
+  public bool Equals(WqlResourceProperty<T> other) {
+    return EqualityComparer<T>.Default.Equals(Value, other.Value);
+  }
+
+  public IEnumerator<T> GetEnumerator() {
+    if (Value is IEnumerable<T> enumerable) {
+      return enumerable.GetEnumerator();
+    }
+
+    return ValueIterator();
+  }
+
+  private IEnumerator<T> ValueIterator() {
+    yield return Value;
+  }
+
+  public override bool Equals(object? obj) {
+    return obj is WqlResourceProperty<T> other && Equals(other);
+  }
+
+  public override int GetHashCode() {
+    return EqualityComparer<T>.Default.GetHashCode(Value);
+  }
+
+  IEnumerator IEnumerable.GetEnumerator() {
+    return GetEnumerator();
+  }
+
   public T Value { get; }
 
   public WqlResourceProperty(T value) {

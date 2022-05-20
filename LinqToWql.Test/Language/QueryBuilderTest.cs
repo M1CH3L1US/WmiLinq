@@ -31,7 +31,7 @@ public class QueryBuilderTest {
   public void AppendSelect_CreatesQueryWithSelectStart_WhenQueryIsEmpty() {
     var expressionTree = new EmptyWqlStatement(_root);
     var sut = new WqlQueryBuilder(expressionTree);
-    var result = sut.Build();
+    var result = sut.Build(out _);
 
     result.Should().Be("SELECT *"
                        + NewLine +
@@ -44,7 +44,7 @@ public class QueryBuilderTest {
     var expressionTree = new SelectWqlStatement(_root, new List<PropertyWqlExpression> {new("Name")});
 
     var sut = new WqlQueryBuilder(expressionTree);
-    var result = sut.Build();
+    var result = sut.Build(out _);
 
     result.Should().Be("SELECT Name"
                        + NewLine +
@@ -60,7 +60,7 @@ public class QueryBuilderTest {
     });
 
     var sut = new WqlQueryBuilder(expressionTree);
-    var result = sut.Build();
+    var result = sut.Build(out _);
 
     result.Should().Be("SELECT Name, Description"
                        + NewLine +
@@ -79,7 +79,7 @@ public class QueryBuilderTest {
     );
 
     var sut = new WqlQueryBuilder(expressionTree);
-    var result = sut.Build();
+    var result = sut.Build(out _);
 
     result.Should().Be("SELECT Name"
                        + NewLine +
@@ -97,16 +97,16 @@ public class QueryBuilderTest {
     var expressionTree = new WhereWqlExpression(_root, comparison);
 
     var sut = new WqlQueryBuilder(expressionTree);
-    var result = sut.Build();
+    var result = sut.Build(out _);
 
     result.Should().Be("SELECT *"
                        + NewLine +
                        $"FROM {ResourceName}"
                        + NewLine +
-                       "WHERE Name = \"Test\"" 
+                       "WHERE Name = \"Test\""
                        + NewLine);
   }
-  
+
   [Fact]
   public void AppendWhere_CreatesQueryWithAndChainedWhereClause_WhenTreeHasMultipleWhereClauses() {
     var clause1 = new BinaryWqlExpression(
@@ -114,28 +114,28 @@ public class QueryBuilderTest {
       ExpressionType.Equal,
       new ConstantWqlExpression("Test")
     );
-    
+
     var clause2 = new BinaryWqlExpression(
       new PropertyWqlExpression("Description"),
       ExpressionType.Equal,
       new ConstantWqlExpression("Test")
     );
-    
+
     var expressionTree = new WhereWqlExpression(new WhereWqlExpression(_root, clause2), clause1);
 
     var sut = new WqlQueryBuilder(expressionTree);
-    var result = sut.Build();
+    var result = sut.Build(out _);
 
     result.Should().Be("SELECT *"
                        + NewLine +
                        $"FROM {ResourceName}"
                        + NewLine +
-                       "WHERE Name = \"Test\"" 
+                       "WHERE Name = \"Test\""
                        + NewLine +
-                       "AND Description = \"Test\"" 
+                       "AND Description = \"Test\""
                        + NewLine);
   }
-  
+
   [Fact]
   public void AppendWhere_CreatesQueryWithOrChainedWhereClause_WhenTreeHasMultipleWhereClausesWithOr() {
     var clause1 = new BinaryWqlExpression(
@@ -143,25 +143,26 @@ public class QueryBuilderTest {
       ExpressionType.Equal,
       new ConstantWqlExpression("Test")
     );
-    
+
     var clause2 = new BinaryWqlExpression(
       new PropertyWqlExpression("Description"),
       ExpressionType.Equal,
       new ConstantWqlExpression("Test")
     );
-    
-    var expressionTree = new WhereWqlExpression(new WhereWqlExpression(_root, clause2), clause1, ExpressionChainType.Or);
+
+    var expressionTree =
+      new WhereWqlExpression(new WhereWqlExpression(_root, clause2), clause1, ExpressionChainType.Or);
 
     var sut = new WqlQueryBuilder(expressionTree);
-    var result = sut.Build();
+    var result = sut.Build(out _);
 
     result.Should().Be("SELECT *"
                        + NewLine +
                        $"FROM {ResourceName}"
                        + NewLine +
-                       "WHERE Name = \"Test\"" 
+                       "WHERE Name = \"Test\""
                        + NewLine +
-                       "OR Description = \"Test\"" 
+                       "OR Description = \"Test\""
                        + NewLine);
   }
 }

@@ -8,23 +8,39 @@ namespace LinqToWql.Language;
 
 public class WqlQueryBuilder {
   private readonly StringBuilder _query = new();
-  private readonly WqlStatement _source;
 
   // We could make this a generic list of WqlStatements and
   // handle the string building in the WqlStatement class, but
   // this isn't worth the effort for this.
   private readonly List<SelectWqlStatement> _selectExpressions = new();
+  private readonly WqlStatement _source;
   private readonly List<WhereWqlExpression> _whereExpressions = new();
 
+  public readonly QueryResultParseOptions ParseOptions = new();
+
   public ConstantExpression WqlResourceExpression { get; set; }
+
+  /// <summary>
+  ///   The runtime type of the WqlResource
+  /// </summary>
+  public Type WqlResourceType => WqlResourceExpression.Value
+                                                      .GetType()
+                                                      .GetGenericArguments()
+                                                      .Single();
 
   public WqlQueryBuilder(WqlStatement source) {
     _source = source;
   }
 
-  public string Build() {
+  public string Build(out QueryResultParseOptions parseOptions) {
     BuildInternal();
+    ApplyParseOptions();
+    parseOptions = ParseOptions;
     return _query.ToString();
+  }
+
+  private void ApplyParseOptions() {
+    ParseOptions.ResourceType = WqlResourceType;
   }
 
   private void BuildInternal() {
@@ -103,6 +119,11 @@ public class WqlQueryBuilder {
 
     // We only care about the last select statement
     var lastSelect = _selectExpressions.First();
+
+    if (lastSelect.SelectToSingleProperty) {
+      ParseOptions.SinglePropertyToSelect = lastSelect.SelectProperties.First().PropertyName;
+    }
+
     var properties = lastSelect.SelectProperties.Select(c => c.PropertyName);
     var propertyString = string.Join(", ", properties);
 

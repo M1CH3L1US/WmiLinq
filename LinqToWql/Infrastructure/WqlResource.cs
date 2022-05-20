@@ -8,6 +8,7 @@ namespace LinqToWql.Infrastructure;
 public class WqlResource<T> : IQueryable<T> {
   public Type ElementType => typeof(T);
   public Expression Expression { get; }
+
   public IQueryProvider Provider { get; }
 
   public WqlResource(IQueryProvider provider, Expression? expression = null) {
