@@ -23,6 +23,10 @@ public class WqlExpressionVisitor : QueryableExpressionVisitor {
     return new EmptyWqlStatement(source);
   }
 
+  protected override Expression TranslateCount(Expression source) {
+    return new EmptyWqlStatement(source);
+  }
+
   protected override Expression TranslateWithin(Expression source, ConstantExpression timeout) {
     throw new NotImplementedException();
   }

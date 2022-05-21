@@ -17,7 +17,10 @@ public class WqlResource<T> : IQueryable<T> {
   }
 
   public IEnumerator<T> GetEnumerator() {
-    return Provider.Execute<IEnumerator<T>>(Expression);
+    // Our query provider will always return an
+    // IEnumerable, not an IEnumerator
+    var queryResult = Provider.Execute<IEnumerable<T>>(Expression);
+    return queryResult.GetEnumerator();
   }
 
   IEnumerator IEnumerable.GetEnumerator() {
