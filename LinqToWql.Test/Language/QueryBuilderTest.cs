@@ -165,4 +165,19 @@ public class QueryBuilderTest {
                        "OR Description = \"Test\""
                        + NewLine);
   }
+
+  [Fact]
+  public void AppendWhere_CreatesQueryWithLikeClause_WhenWhereHasLikeClause() {
+    var expressionTree = new WhereWqlExpression(_root, new LikeWqlExpression("Name", "%Foo%"));
+
+    var sut = new WqlQueryBuilder(expressionTree);
+    var result = sut.Build(out _);
+
+    result.Should().Be("SELECT *"
+                       + NewLine +
+                       $"FROM {ResourceName}"
+                       + NewLine +
+                       "WHERE Name LIKE \"%Foo%\""
+                       + NewLine);
+  }
 }
