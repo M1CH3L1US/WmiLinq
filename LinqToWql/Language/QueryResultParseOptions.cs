@@ -1,13 +1,8 @@
-﻿using System.Collections;
-
-namespace LinqToWql.Language;
+﻿namespace LinqToWql.Language;
 
 public class QueryResultParseOptions {
-  private readonly List<Func<object, object>> _postParsingProcessors = new();
-  private readonly List<Func<IEnumerable, IEnumerable>> _postQueryProcessors = new();
-
-  public IEnumerable<Func<object, object>> PostParsingProcessors => _postParsingProcessors;
-  public IEnumerable<Func<IEnumerable, IEnumerable>> PostQueryProcessors => _postQueryProcessors;
+  private readonly List<Func<IEnumerable<object>, object?>> _resultProcessors = new();
+  public IEnumerable<Func<IEnumerable<object>, object?>> ResultProcessors => _resultProcessors;
 
   /// <summary>
   ///   If property is true, the query result will be parsed
@@ -29,11 +24,17 @@ public class QueryResultParseOptions {
   /// </summary>
   public Type QueryResultType { get; set; }
 
-  public void AddPostParsingProcessor(Func<object, object> updateParseResult) {
-    _postParsingProcessors.Add(updateParseResult);
-  }
-
-  public void AddPostQueryProcessor(Func<IEnumerable, IEnumerable> updateQueryResult) {
-    _postQueryProcessors.Add(updateQueryResult);
+  /// <summary>
+  ///   Add a post processor function for the query result.
+  ///   Optionally, return an updated version of the input.
+  ///   Beware that, if the query operator is an intermediate
+  ///   operator that does return another IEnumerable, you
+  ///   should make sure that the returned value is an IEnumerable
+  ///   because it will be casted as such for the next operation in the
+  ///   pipeline.
+  /// </summary>
+  /// <param name="resultProcessor"></param>
+  public void AddResultProcessor(Func<IEnumerable<object>, object?> resultProcessor) {
+    _resultProcessors.Add(resultProcessor);
   }
 }

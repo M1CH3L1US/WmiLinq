@@ -2,7 +2,6 @@
 using LinqToWql.Infrastructure;
 using LinqToWql.Language;
 using LinqToWql.Language.Expressions;
-using LinqToWql.Language.Statements;
 using LinqToWql.Test.Mocks;
 
 namespace LinqToWql.Test.Language;
@@ -16,7 +15,7 @@ public class QueryBuilderTest {
 
   [Fact]
   public void GetResourceName_GetsTheResourceNameFromTheQuery() {
-    var expressionTree = new EmptyWqlStatement(_root);
+    var expressionTree = new WqlStatementBuilder(_root).Build();
     var sut = new WqlQueryBuilder(expressionTree);
 
     // We need to traverse the tree first
@@ -29,7 +28,7 @@ public class QueryBuilderTest {
 
   [Fact]
   public void AppendSelect_CreatesQueryWithSelectStart_WhenQueryIsEmpty() {
-    var expressionTree = new EmptyWqlStatement(_root);
+    var expressionTree = new WqlStatementBuilder(_root).Build();
     var sut = new WqlQueryBuilder(expressionTree);
     var result = sut.Build(out _);
 
@@ -41,7 +40,10 @@ public class QueryBuilderTest {
 
   [Fact]
   public void AppendSelect_CreatesQueryWithSelectSingleProperty_WhenQueryHasSingleSelectSingleProperty() {
-    var expressionTree = new SelectWqlStatement(_root, new List<PropertyWqlExpression> {new("Name")});
+    var expressionTree = new WqlStatementBuilder(_root)
+                         .AddSelectClauseFromLambda(
+                           Lambda<SmsCollection>(x => x.Name))
+                         .Build();
 
     var sut = new WqlQueryBuilder(expressionTree);
     var result = sut.Build(out _);
@@ -54,10 +56,10 @@ public class QueryBuilderTest {
 
   [Fact]
   public void AppendSelect_CreatesQueryWithSelectMultipleProperties_WhenQueryHasSingleSelectMultipleProperties() {
-    var expressionTree = new SelectWqlStatement(_root, new List<PropertyWqlExpression> {
-      new("Name"),
-      new("Description")
-    });
+    var expressionTree = new WqlStatementBuilder(_root)
+                         .AddSelectClauseFromLambda(
+                           Lambda<SmsCollection>(x => new {x.Name, x.Description}))
+                         .Build();
 
     var sut = new WqlQueryBuilder(expressionTree);
     var result = sut.Build(out _);
@@ -70,18 +72,19 @@ public class QueryBuilderTest {
 
   [Fact]
   public void AppendSelect_UsesTheLastSelectStatementInTheExpressionTree_WhenTreeHasMultipleSelectExpressions() {
-    var expressionTree = new SelectWqlStatement(
-      new SelectWqlStatement(
-        _root,
-        new List<PropertyWqlExpression> {new("Name"), new("Description")}
-      ),
-      new List<PropertyWqlExpression> {new("Name")}
-    );
+    var nestedSelectStatement = new WqlStatementBuilder(_root)
+                                .AddSelectClauseFromLambda(Lambda<SmsCollection>(x => new {x.Name, x.Description}))
+                                .Build();
+
+    var expressionTree = new WqlStatementBuilder(nestedSelectStatement)
+                         .AddSelectClauseFromLambda(
+                           Lambda<SmsCollection>(x => x.Name))
+                         .Build();
 
     var sut = new WqlQueryBuilder(expressionTree);
     var result = sut.Build(out _);
 
-    result.Should().Be("SELECT Name"
+    result.Should().Be("SELECT Name, Description"
                        + NewLine +
                        $"FROM {ResourceName}"
                        + NewLine);
@@ -89,12 +92,9 @@ public class QueryBuilderTest {
 
   [Fact]
   public void AppendWhere_CreatesQueryWithPropertyToConstantComparison_WhenTreeHasSingleWhereWithConstantComparison() {
-    var comparison = new BinaryWqlExpression(
-      new PropertyWqlExpression("Name"),
-      ExpressionType.Equal,
-      new ConstantWqlExpression("Test")
-    );
-    var expressionTree = new WhereWqlExpression(_root, comparison);
+    var expressionTree = new WqlStatementBuilder(_root)
+                         .AddWhereClauseFromLambda(Lambda<SmsCollection>(x => x.Name == "Test"))
+                         .Build();
 
     var sut = new WqlQueryBuilder(expressionTree);
     var result = sut.Build(out _);
@@ -109,19 +109,13 @@ public class QueryBuilderTest {
 
   [Fact]
   public void AppendWhere_CreatesQueryWithAndChainedWhereClause_WhenTreeHasMultipleWhereClauses() {
-    var clause1 = new BinaryWqlExpression(
-      new PropertyWqlExpression("Name"),
-      ExpressionType.Equal,
-      new ConstantWqlExpression("Test")
-    );
+    var innerWhereStatement = new WqlStatementBuilder(_root)
+                              .AddWhereClauseFromLambda(Lambda<SmsCollection>(x => x.Name == "Test"))
+                              .Build();
 
-    var clause2 = new BinaryWqlExpression(
-      new PropertyWqlExpression("Description"),
-      ExpressionType.Equal,
-      new ConstantWqlExpression("Test")
-    );
-
-    var expressionTree = new WhereWqlExpression(new WhereWqlExpression(_root, clause2), clause1);
+    var expressionTree = new WqlStatementBuilder(innerWhereStatement)
+                         .AddWhereClauseFromLambda(Lambda<SmsCollection>(x => x.Description == "Test"))
+                         .Build();
 
     var sut = new WqlQueryBuilder(expressionTree);
     var result = sut.Build(out _);
@@ -138,20 +132,14 @@ public class QueryBuilderTest {
 
   [Fact]
   public void AppendWhere_CreatesQueryWithOrChainedWhereClause_WhenTreeHasMultipleWhereClausesWithOr() {
-    var clause1 = new BinaryWqlExpression(
-      new PropertyWqlExpression("Name"),
-      ExpressionType.Equal,
-      new ConstantWqlExpression("Test")
-    );
+    var innerWhereStatement = new WqlStatementBuilder(_root)
+                              .AddWhereClauseFromLambda(Lambda<SmsCollection>(x => x.Name == "Test"))
+                              .Build();
 
-    var clause2 = new BinaryWqlExpression(
-      new PropertyWqlExpression("Description"),
-      ExpressionType.Equal,
-      new ConstantWqlExpression("Test")
-    );
-
-    var expressionTree =
-      new WhereWqlExpression(new WhereWqlExpression(_root, clause2), clause1, ExpressionChainType.Or);
+    var expressionTree = new WqlStatementBuilder(innerWhereStatement)
+                         .AddWhereClauseFromLambda(Lambda<SmsCollection>(x => x.Description == "Test"),
+                           ExpressionChainType.Or)
+                         .Build();
 
     var sut = new WqlQueryBuilder(expressionTree);
     var result = sut.Build(out _);
@@ -168,7 +156,9 @@ public class QueryBuilderTest {
 
   [Fact]
   public void AppendWhere_CreatesQueryWithLikeClause_WhenWhereHasLikeClause() {
-    var expressionTree = new WhereWqlExpression(_root, new LikeWqlExpression("Name", "%Foo%"));
+    var expressionTree = new WqlStatementBuilder(_root)
+                         .AddWhereClauseFromLambda(Lambda<SmsCollection>(x => x.Name.Like("%Foo%")))
+                         .Build();
 
     var sut = new WqlQueryBuilder(expressionTree);
     var result = sut.Build(out _);
@@ -179,5 +169,13 @@ public class QueryBuilderTest {
                        + NewLine +
                        "WHERE Name LIKE \"%Foo%\""
                        + NewLine);
+  }
+
+  private LambdaExpression Lambda<T>(Expression<Func<T, object>> lambda) {
+    if (lambda.Body is UnaryExpression) {
+      return Expression.Lambda(((UnaryExpression) lambda.Body).Operand);
+    }
+
+    return lambda;
   }
 }

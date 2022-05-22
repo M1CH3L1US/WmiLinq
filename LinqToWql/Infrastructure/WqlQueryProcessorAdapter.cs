@@ -16,23 +16,32 @@ public class WqlQueryProcessorAdapter : IWqlQueryProcessor {
     var queryResult = _queryProcessor.ExecuteQuery(query);
     var resultEnumerable = ResultObjectEnumerableAdapter.FromResultObject(queryResult);
 
-    // If the result type is not an IEnumerable, we only return
-    // The first item because this means the result was not requested
-    // by IQueryable but instead through .Single or .First. 
-    if (!IsIEnumerable<T>(out _)) {
-      return (T) MapToResultType(resultEnumerable.First(), parseOptions);
-    }
-
     // The ToList call ensures that the enumerations of the items have taken place
     // such that we no longer rely on the enumerator of IResultObject that might
-    // still have a connection to the wql query server.  
-    var listResult = resultEnumerable.ToList();
+    // still have a connection to the wql query server.
+    var resultObjectsAsList = resultEnumerable.ToList();
 
-    return CastToResultEnumerable<T>(listResult, parseOptions);
+    var mapper = new ResultDataMapper(resultObjectsAsList, parseOptions);
+    var mappedResultObject = mapper.ApplyTypeMapping();
+
+    if (IsIEnumerable<T>(out _)) {
+      return CastToResultEnumerable<T>((IEnumerable<object>) mappedResultObject, parseOptions);
+    }
+
+    return (T) mappedResultObject;
   }
 
+  /// <summary>
+  ///   We need this additional conversion step through
+  ///   Enumerable.Cast[TResult] because we cannot cast
+  ///   List[object] or IEnumerable[object] to T,
+  ///   which is IEnumerable[TResult]
+  /// </summary>
+  /// <param name="objects"></param>
+  /// <param name="parseOptions"></param>
+  /// <typeparam name="T"></typeparam>
   private T CastToResultEnumerable<T>(
-    IEnumerable<IResultObject> resultObjects,
+    IEnumerable<object> objects,
     QueryResultParseOptions parseOptions
   ) {
     var resultType = parseOptions.QueryResultType;
@@ -40,13 +49,7 @@ public class WqlQueryProcessorAdapter : IWqlQueryProcessor {
                             .GetMethod(nameof(Enumerable.Cast))!
                             .MakeGenericMethod(resultType);
 
-    var mappedResult = resultObjects.Select(obj => MapToResultType(obj, parseOptions));
-    return (T) genericCastMethod.Invoke(null, new object[] {mappedResult})!;
-  }
-
-  private object MapToResultType(IResultObject resultObject, QueryResultParseOptions parseOptions) {
-    var mapper = new ResultDataMapper(resultObject, parseOptions);
-    return mapper.ApplyTypeMapping();
+    return (T) genericCastMethod.Invoke(null, new object[] {objects})!;
   }
 
   private Type GetResultType<T>() {

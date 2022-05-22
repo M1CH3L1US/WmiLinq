@@ -8,13 +8,11 @@ namespace LinqToWql.Language;
 
 public class WqlQueryBuilder {
   private readonly StringBuilder _query = new();
-
-  // We could make this a generic list of WqlStatements and
-  // handle the string building in the WqlStatement class, but
-  // this isn't worth the effort for this.
-  private readonly List<SelectWqlStatement> _selectExpressions = new();
+  private readonly HashSet<string> _selectProperties = new();
   private readonly WqlStatement _source;
-  private readonly List<WhereWqlExpression> _whereExpressions = new();
+  private readonly List<WqlStatement> _statements = new();
+
+  private readonly Dictionary<string, ExpressionChainType> _whereClauses = new();
 
   public readonly QueryResultParseOptions ParseOptions = new();
 
@@ -39,54 +37,77 @@ public class WqlQueryBuilder {
     return _query.ToString();
   }
 
+  public void AddWhereClause(WqlExpression expression, ExpressionChainType chainType = ExpressionChainType.And) {
+    _whereClauses.Add(expression.ToWqlString(), chainType);
+  }
+
+  public void AddSelectProperties(IList<PropertyWqlExpression> properties) {
+    var propertyNames = properties.Select(p => p.PropertyName);
+    foreach (var propertyName in propertyNames) {
+      _selectProperties.Add(propertyName);
+    }
+  }
+
   private void ApplyParseOptions() {
     ParseOptions.ResourceType = WqlResourceType;
   }
 
   private void BuildInternal() {
     TraverseQueryTree();
+    ParseStatements();
     AppendSelect();
     AppendFrom();
-    AppendWhere();
+    AppendWhereToQuery();
+  }
+
+  private void ParseStatements() {
+    foreach (var statement in _statements) {
+      statement.AppendSelfToQuery(this);
+    }
   }
 
   internal void TraverseQueryTree() {
     Expression statement = _source;
 
     while (statement is WqlStatement wqlStatement) {
-      switch (wqlStatement) {
-        case SelectWqlStatement selectStatement:
-          _selectExpressions.Add(selectStatement);
-          break;
-        case WhereWqlExpression whereStatement:
-          _whereExpressions.Add(whereStatement);
-          break;
-      }
-
+      _statements.Add(wqlStatement);
       statement = wqlStatement.InnerStatement;
     }
+
+    // By traversing the tree inwards, we get the statements
+    // in reversed order than how they were originally created in.
+    // To accurately reflect things like OR where chains, we reverse
+    // the statement tree again.
+    _statements.Reverse();
 
     // The first element in an expression tree will always be the query source
     // in the form of a constant expression. 
     WqlResourceExpression = (ConstantExpression) statement!;
   }
 
-  private void AppendWhere() {
-    if (_whereExpressions.Count == 0) {
+  private void AppendWhereToQuery() {
+    if (_whereClauses.Count == 0) {
       return;
     }
 
+    var isFirstWhereClause = true;
     _query.Append("WHERE ");
 
-    foreach (var whereExpression in _whereExpressions) {
-      var str = whereExpression.InnerExpression.ToWqlString();
-      _query.AppendLine(str);
+    foreach (var whereClause in _whereClauses) {
+      var clause = whereClause.Key;
+      var chainType = whereClause.Value;
 
-      // Don't include the chain operator if this is the last expression
-      if (_whereExpressions.IndexOf(whereExpression) != _whereExpressions.Count - 1) {
-        var chainOperator = whereExpression.ChainType.ToString().ToUpper();
-        _query.Append($"{chainOperator} ");
+      // Don't append the chain operator on the first clause
+      if (!isFirstWhereClause) {
+        var chainTypeString = chainType.ToString().ToUpper();
+        _query.Append(chainTypeString);
+        _query.Append(' ');
       }
+      else {
+        isFirstWhereClause = false;
+      }
+
+      _query.AppendLine(clause);
     }
   }
 
@@ -112,20 +133,12 @@ public class WqlQueryBuilder {
 
     // If there is no select query in the list,
     // we select all properties
-    if (_selectExpressions.Count == 0) {
+    if (_selectProperties.Count == 0) {
       _query.AppendLine("*");
       return;
     }
 
-    // We only care about the last select statement
-    var lastSelect = _selectExpressions.First();
-
-    if (lastSelect.SelectToSingleProperty) {
-      ParseOptions.SinglePropertyToSelect = lastSelect.SelectProperties.First().PropertyName;
-    }
-
-    var properties = lastSelect.SelectProperties.Select(c => c.PropertyName);
-    var propertyString = string.Join(", ", properties);
+    var propertyString = string.Join(", ", _selectProperties);
 
     _query.AppendLine(propertyString);
   }

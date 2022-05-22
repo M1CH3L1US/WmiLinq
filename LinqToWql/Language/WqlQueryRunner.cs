@@ -1,6 +1,6 @@
 ﻿using System.Linq.Expressions;
 using LinqToWql.Infrastructure;
-using LinqToWql.Language.Expressions;
+using LinqToWql.Language.Statements;
 
 namespace LinqToWql.Language;
 

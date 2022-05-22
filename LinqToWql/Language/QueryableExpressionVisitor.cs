@@ -57,7 +57,8 @@ public abstract class QueryableExpressionVisitor : ExpressionVisitor {
         TranslateSingle(sourceExpr, TryGetLambdaExpressionFromArgument(1)),
       nameof(Queryable.Count) =>
         TranslateCount(sourceExpr),
-
+      nameof(Queryable.SingleOrDefault) =>
+        TranslateSingleOrDefault(sourceExpr, TryGetLambdaExpressionFromArgument(1)),
       _ => null!
     };
   }
@@ -73,6 +74,7 @@ public abstract class QueryableExpressionVisitor : ExpressionVisitor {
   protected abstract Expression TranslateSelect(Expression expression, LambdaExpression lambdaExpression);
   protected abstract Expression TranslateSingle(Expression source, LambdaExpression? lambdaExpression);
   protected abstract Expression TranslateCount(Expression source);
+  protected abstract Expression TranslateSingleOrDefault(Expression source, LambdaExpression? lambdaExpression);
 
   # region WQL Methods
 

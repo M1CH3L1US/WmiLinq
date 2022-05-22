@@ -7,34 +7,46 @@ namespace LinqToWql.Data;
 public class ResultDataMapper {
   private readonly QueryResultParseOptions _parseOptions;
   private readonly Type _resourceType;
-  private readonly IResultObject _resultObject;
+  private readonly IEnumerable<IResultObject> _resultObjects;
 
-  public ResultDataMapper(IResultObject resultObject, QueryResultParseOptions parseOptions) {
-    _resultObject = resultObject;
+  public ResultDataMapper(IEnumerable<IResultObject> resultObjects, QueryResultParseOptions parseOptions) {
+    _resultObjects = resultObjects;
     _parseOptions = parseOptions;
     _resourceType = parseOptions.ResourceType;
   }
 
   public object ApplyTypeMapping() {
-    var resource = MapToResource();
+    var mappedObjects = _resultObjects.Select(ApplyTypeMappingInternal);
+    var resultProcessors = _parseOptions.ResultProcessors;
+    object result = mappedObjects;
+
+    foreach (var resultProcessor in resultProcessors) {
+      result = resultProcessor((IEnumerable<object>) result!)!;
+    }
+
+    return result!;
+  }
+
+  private object ApplyTypeMappingInternal(IResultObject resultObject) {
+    var resource = MapResultObjectToResource(resultObject);
 
     if (_parseOptions.ShouldSelectSingleProperty) {
-      return SelectSingleResourceProperty(resource);
+      return MapToSingleResourceProperty(resource);
     }
 
     if (IsAnonymousType()) {
-      return MakeAnonymousType(resource, _parseOptions.QueryResultType);
+      return MapToAnonymousType(resource, _parseOptions.QueryResultType);
     }
 
     return resource;
   }
 
-  private object SelectSingleResourceProperty(WqlResourceData resource) {
+  private object MapToSingleResourceProperty(WqlResourceData resource) {
     var property = resource.GetType().GetProperty(_parseOptions.SinglePropertyToSelect!)!;
     return property.GetValue(resource);
   }
 
-  private object MakeAnonymousType(WqlResourceData resource, Type anonymousType) {
+  private object MapToAnonymousType(WqlResourceData resource, Type anonymousType) {
     var resourceType = resource.GetType();
     var properties = anonymousType.GetProperties();
     // Anonymous types have a single constructor
@@ -56,9 +68,9 @@ public class ResultDataMapper {
     return genericTypeName.Contains("AnonymousType");
   }
 
-  private WqlResourceData MapToResource() {
+  private WqlResourceData MapResultObjectToResource(IResultObject resultObject) {
     var resourceCtor = _resourceType.GetConstructor(new[] {typeof(IResultObject)})!;
-    var resourceInstance = resourceCtor.Invoke(new object[] {_resultObject});
+    var resourceInstance = resourceCtor.Invoke(new object[] {resultObject});
     return (WqlResourceData) resourceInstance;
   }
 }

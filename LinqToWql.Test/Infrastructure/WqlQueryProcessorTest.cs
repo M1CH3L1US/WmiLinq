@@ -18,4 +18,11 @@ public class WqlQueryProcessorTest {
 
     count.Should().Be(1);
   }
+
+  [Fact]
+  public void ApplyQueryTransformation_AppliesCustomQueryTransformationFromStatements_WhenQueryHasSuchStatements() {
+    var instances = _resource.Where(r => r.Description == "Foo");
+
+    instances.Count().Should().Be(1);
+  }
 }

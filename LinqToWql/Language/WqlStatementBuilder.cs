@@ -4,31 +4,58 @@ using LinqToWql.Language.Statements;
 
 namespace LinqToWql.Language;
 
-public class WqlExpressionFactory {
-  public WhereWqlExpression MakeWhereExpression(
-    Expression source,
-    LambdaExpression expression,
-    ExpressionChainType chainType
-  ) {
-    var inner = GetInnerExpressionFromLambda(expression);
-    return new WhereWqlExpression(source, inner, chainType);
+public class WqlStatementBuilder {
+  private readonly List<Action<WqlQueryBuilder>> _builderActions = new();
+  private readonly Expression _source;
+
+  public WqlStatementBuilder(Expression source) {
+    _source = source;
   }
 
-  public Expression MakeSelectExpression(Expression source, LambdaExpression lambda) {
-    var selectProperty = GetInnerMemberAccessFromLambda(lambda);
-    return new SelectWqlStatement(source, selectProperty);
+  public WqlStatement Build() {
+    return new WqlStatement(_source, _builderActions);
   }
 
-  private WqlExpression GetInnerExpressionFromLambda(LambdaExpression lambda) {
-    if (lambda.Body is MethodCallExpression methodCall) {
-      return GetInnerMethodCallFromLambda(lambda, methodCall);
+  public WqlStatementBuilder TryAddWhereClauseFromLambda(LambdaExpression? lambdaExpression,
+    ExpressionChainType chainType = ExpressionChainType.And) {
+    if (lambdaExpression is null) {
+      return this;
     }
 
-    if (lambda.Body is BinaryExpression binary) {
-      return ConvertToBinaryWqlExpression(binary);
+    return AddWhereClauseFromLambda(lambdaExpression, chainType);
+  }
+
+  public WqlStatementBuilder AddWhereClauseFromLambda(LambdaExpression lambdaExpression,
+    ExpressionChainType chainType = ExpressionChainType.And) {
+    var innerExpression = GetInnerExpressionFromLambda(lambdaExpression);
+    AddActionInBuilderCtx(builder => builder.AddWhereClause(innerExpression, chainType));
+
+    return this;
+  }
+
+  public WqlStatementBuilder AddSelectClauseFromLambda(LambdaExpression lambdaExpression) {
+    var memberAccesses = GetInnerMemberAccessFromLambda(lambdaExpression);
+    AddActionInBuilderCtx(builder => builder.AddSelectProperties(memberAccesses));
+
+    // If we select down to a single property,
+    // we need to make sure that that information
+    // is passed down to the type mapper through the
+    // ParseOptions.
+    if (memberAccesses.Count == 1) {
+      var propertyToSelect = memberAccesses.Single().PropertyName;
+      AddActionInBuilderCtx(builder => builder.ParseOptions.SinglePropertyToSelect = propertyToSelect);
     }
 
-    throw new NotSupportedException();
+    return this;
+  }
+
+  public WqlStatementBuilder AddQueryResultProcessor(Func<IEnumerable<object>, object?> resultProcessor) {
+    AddActionInBuilderCtx(builder => builder.ParseOptions.AddResultProcessor(resultProcessor));
+    return this;
+  }
+
+  public void AddActionInBuilderCtx(Action<WqlQueryBuilder> builderAction) {
+    _builderActions.Add(builderAction);
   }
 
   private WqlExpression ConvertToWqlExpression(Expression expression) {
@@ -66,6 +93,18 @@ public class WqlExpressionFactory {
     }
 
     throw new NotSupportedException("The select operation is not supported");
+  }
+
+  private WqlExpression GetInnerExpressionFromLambda(LambdaExpression lambda) {
+    if (lambda.Body is MethodCallExpression methodCall) {
+      return GetInnerMethodCallFromLambda(lambda, methodCall);
+    }
+
+    if (lambda.Body is BinaryExpression binary) {
+      return ConvertToBinaryWqlExpression(binary);
+    }
+
+    throw new NotSupportedException();
   }
 
   private WqlExpression GetInnerMethodCallFromLambda(LambdaExpression lambda, MethodCallExpression methodCall) {

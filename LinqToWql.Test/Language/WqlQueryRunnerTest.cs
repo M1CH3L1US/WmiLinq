@@ -28,9 +28,9 @@ public class WqlQueryRunnerTest {
                     + NewLine +
                     "FROM SMS_Collection"
                     + NewLine +
-                    "WHERE Name = \"Test\""
+                    "WHERE CollectionId = \"1-100-10\" AND Description = \"Test\""
                     + NewLine +
-                    "OR CollectionId = \"1-100-10\" AND Description = \"Test\""
+                    "OR Name = \"Test\""
                     + NewLine);
   }
 
