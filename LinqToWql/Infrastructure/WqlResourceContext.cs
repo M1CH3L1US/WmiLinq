@@ -26,7 +26,7 @@ public abstract class WqlResourceContext : IDisposable {
     return (T) Activator.CreateInstance(typeof(T), this);
   }
 
-  public WqlResource<T> GetResource<T>() {
+  public WqlResource<T> GetResource<T>() where T : WqlResourceData<T> {
     return new WqlResource<T>(QueryProvider);
   }
 

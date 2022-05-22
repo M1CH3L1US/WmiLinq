@@ -4,7 +4,7 @@ using Microsoft.ConfigurationManagement.ManagementProvider;
 
 namespace LinqToWql.Model;
 
-public abstract class WqlResourceData<T> {
+public abstract class WqlResourceData<T> where T : WqlResourceData<T> {
   protected readonly WqlResourceContext Context;
   protected readonly IResultObject Resource;
 
@@ -73,6 +73,15 @@ public abstract class WqlResourceData<T> {
   /// <returns></returns>
   protected WqlResource<T> GetQueryableResource() {
     return Context.GetResource<T>();
+  }
+
+  /// <summary>
+  ///   Gets a resource from the context of type T.
+  /// </summary>
+  /// <typeparam name="TResource"></typeparam>
+  /// <returns></returns>
+  protected WqlResource<TResource> GetResource<TResource>() where TResource : WqlResourceData<TResource> {
+    return Context.GetResource<TResource>();
   }
 
   /// <summary>
