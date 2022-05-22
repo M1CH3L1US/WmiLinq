@@ -33,4 +33,13 @@ public class ResultDataMapperTest {
 
     instance.Value.Should().NotBeNull();
   }
+
+  [Fact]
+  public void Compile_InvokesQueryWithClosureValueInWhereStatement() {
+    var instance = _resource.Single();
+
+    var selfInstance = instance.GetSelf();
+
+    selfInstance.Should().BeOfType<SmsCollection>();
+  }
 }

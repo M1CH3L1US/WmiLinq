@@ -2,6 +2,7 @@
 using LinqToWql.Infrastructure;
 using LinqToWql.Language;
 using LinqToWql.Language.Expressions;
+using LinqToWql.Model;
 using LinqToWql.Test.Mocks;
 
 namespace LinqToWql.Test.Language;
@@ -168,6 +169,42 @@ public class QueryBuilderTest {
                        $"FROM {ResourceName}"
                        + NewLine +
                        "WHERE Name LIKE \"%Foo%\""
+                       + NewLine);
+  }
+
+  [Fact]
+  public void AppendWhere_CreatesWhereClauseWithClosureValue_WhenLambdaContainsClosureValue() {
+    var closureValue = "Foo";
+    var expressionTree = new WqlStatementBuilder(_root)
+                         .AddWhereClauseFromLambda(Lambda<SmsCollection>(x => x.Name == closureValue))
+                         .Build();
+
+    var sut = new WqlQueryBuilder(expressionTree);
+    var result = sut.Build(out _);
+
+    result.Should().Be("SELECT *"
+                       + NewLine +
+                       $"FROM {ResourceName}"
+                       + NewLine +
+                       "WHERE Name = \"Foo\""
+                       + NewLine);
+  }
+
+  [Fact]
+  public void AppendWhere_CreatesValueQuery_WhenLambdaContainsClosureValueOfTypeWqlResourceProperty() {
+    WqlResourceProperty<string> closureValue = "Foo";
+    var expressionTree = new WqlStatementBuilder(_root)
+                         .AddWhereClauseFromLambda(Lambda<SmsCollection>(x => x.Name == closureValue))
+                         .Build();
+
+    var sut = new WqlQueryBuilder(expressionTree);
+    var result = sut.Build(out _);
+
+    result.Should().Be("SELECT *"
+                       + NewLine +
+                       $"FROM {ResourceName}"
+                       + NewLine +
+                       "WHERE Name = \"Foo\""
                        + NewLine);
   }
 

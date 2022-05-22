@@ -61,7 +61,7 @@ public abstract class WqlResourceData<T> {
   ///   defined through the <see cref="ResourceAttribute" /> attribute.
   /// </summary>
   /// <returns></returns>
-  public string GetResourceClassName() {
+  private string GetResourceClassName() {
     var resourceAttribute = GetType().GetCustomAttribute<ResourceAttribute>();
     return resourceAttribute.Name;
   }
@@ -71,7 +71,7 @@ public abstract class WqlResourceData<T> {
   ///   current instance type.
   /// </summary>
   /// <returns></returns>
-  public WqlResource<T> GetQueryableResource() {
+  protected WqlResource<T> GetQueryableResource() {
     return Context.GetResource<T>();
   }
 

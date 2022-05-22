@@ -35,6 +35,7 @@ public class ResourceSourceGenerator : ISourceGenerator {
         var resource = AddResourceClass(classModel);
         AddResourceDataImpl(resource, classModel);
         AddPropertyMapping(resource, classModel);
+        AddDefaultPropertyMapping(resource, classModel);
         AddClassClosing(resource, classModel);
         context.AddSource($"{classModel.Name}.g.cs", resource.ToString());
       }
@@ -116,6 +117,12 @@ public class ResourceSourceGenerator : ISourceGenerator {
 
       resource.AppendLine("}");
     }
+  }
+
+  private void AddDefaultPropertyMapping(StringBuilder resource, ITypeSymbol classModel) {
+    resource.AppendLine("public WqlResourceProperty<string> ResourceId {");
+    resource.AppendLine(@"get => Resource[""ResourceID""].StringValue;");
+    resource.AppendLine("}");
   }
 
   private void AddClassClosing(StringBuilder resource, ITypeSymbol classModel) {

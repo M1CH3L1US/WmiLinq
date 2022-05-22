@@ -1,6 +1,7 @@
 ﻿using System.Linq.Expressions;
 using LinqToWql.Language.Expressions;
 using LinqToWql.Language.Statements;
+using LinqToWql.Model;
 
 namespace LinqToWql.Language;
 
@@ -58,43 +59,6 @@ public class WqlStatementBuilder {
     _builderActions.Add(builderAction);
   }
 
-  private WqlExpression ConvertToWqlExpression(Expression expression) {
-    if (expression is MemberExpression memberExpression) {
-      return new PropertyWqlExpression(memberExpression.Member.Name);
-    }
-
-    if (expression is ConstantExpression constant) {
-      return new ConstantWqlExpression(constant.Value);
-    }
-
-    if (expression is BinaryExpression binary) {
-      return ConvertToBinaryWqlExpression(binary);
-    }
-
-    throw new NotSupportedException();
-  }
-
-  private BinaryWqlExpression ConvertToBinaryWqlExpression(BinaryExpression binary) {
-    var left = ConvertToWqlExpression(binary.Left);
-    var right = ConvertToWqlExpression(binary.Right);
-    var op = binary.NodeType;
-
-    return new BinaryWqlExpression(left, op, right);
-  }
-
-  private List<PropertyWqlExpression> GetInnerMemberAccessFromLambda(LambdaExpression lambda) {
-    if (lambda.Body is MemberExpression memberAccess) {
-      var member = memberAccess.Member.Name;
-      return new List<PropertyWqlExpression> {new(member)};
-    }
-
-    if (lambda.Body is NewExpression newExpression) {
-      return newExpression.Arguments.Select(ConvertToWqlExpression).Cast<PropertyWqlExpression>().ToList();
-    }
-
-    throw new NotSupportedException("The select operation is not supported");
-  }
-
   private WqlExpression GetInnerExpressionFromLambda(LambdaExpression lambda) {
     if (lambda.Body is MethodCallExpression methodCall) {
       return GetInnerMethodCallFromLambda(lambda, methodCall);
@@ -126,5 +90,106 @@ public class WqlStatementBuilder {
         new LikeWqlExpression(propertyName, (string) argument.Value!),
       _ => throw new NotImplementedException()
     };
+  }
+
+  private BinaryWqlExpression ConvertToBinaryWqlExpression(BinaryExpression binary) {
+    var left = ConvertToWqlExpression(binary.Left);
+    var right = ConvertToWqlExpression(binary.Right, true);
+    var op = binary.NodeType;
+
+    return new BinaryWqlExpression(left, op, right);
+  }
+
+  private List<PropertyWqlExpression> GetInnerMemberAccessFromLambda(LambdaExpression lambda) {
+    if (lambda.Body is MemberExpression memberAccess) {
+      var member = memberAccess.Member.Name;
+      return new List<PropertyWqlExpression> {new(member)};
+    }
+
+    if (lambda.Body is NewExpression newExpression) {
+      return newExpression.Arguments
+                          .Select(argument => ConvertToWqlExpression(argument))
+                          .Cast<PropertyWqlExpression>()
+                          .ToList();
+    }
+
+    throw new NotSupportedException("The select operation is not supported");
+  }
+
+  private WqlExpression ConvertToWqlExpression(Expression expression, bool isValueExpected = false) {
+    if (expression is MemberExpression memberExpression) {
+      if (!isValueExpected) {
+        // This is a property expression in .Where(x => x.Name ...)
+        return new PropertyWqlExpression(memberExpression.Member.Name);
+      }
+
+      var value = GetValueFromClosureMemberAccess(memberExpression);
+      return new ConstantWqlExpression(value);
+    }
+
+    if (expression is ConstantExpression constant) {
+      return new ConstantWqlExpression(constant.Value);
+    }
+
+    if (expression is BinaryExpression binary) {
+      return ConvertToBinaryWqlExpression(binary);
+    }
+
+    // This is the case when we convert a resource property,
+    // which is always of type WqlResourceProperty<TValue>,
+    // in a lambda expression like:
+    // resource.Where(x => x.Name == this.Name)
+    // where this.Name is any member of a resource class
+    if (expression is UnaryExpression unary) {
+      return ConvertToWqlExpression(unary.Operand, isValueExpected);
+    }
+
+    throw new NotSupportedException();
+  }
+
+  /// <summary>
+  ///   In cases, where the value to compare in a lambda
+  ///   is a value from a closure e.g.
+  ///   <code>
+  /// var foo = "Foo";
+  /// queryable.Where(x => x.Name == foo);
+  /// </code>
+  ///   We need to get that value instead of placing the member name
+  ///   in the query. This method gets that value from the runtime
+  ///   member info.
+  /// </summary>
+  /// <param name="expression"></param>
+  /// <returns></returns>
+  private object GetValueFromClosureMemberAccess(MemberExpression expression) {
+    var objectMember = Expression.Convert(expression, typeof(object));
+    var getValueLambda = Expression.Lambda<Func<object>>(objectMember);
+    var valueGetter = getValueLambda.Compile();
+
+    var value = valueGetter();
+
+    if (!IsWqlResourceProperty(value)) {
+      return value;
+    }
+
+    return GetValueFromWqlResourceProperty(value);
+  }
+
+  private bool IsWqlResourceProperty(object obj) {
+    var objectType = obj.GetType();
+
+    if (!objectType.IsGenericType) {
+      return false;
+    }
+
+    return objectType.GetGenericTypeDefinition() == typeof(WqlResourceProperty<>);
+  }
+
+  private object GetValueFromWqlResourceProperty(object property) {
+    // We should have already determined that the type of `property`
+    // is WqlResourceProperty so we can just get the reflection property
+    // field and return its value.
+    return property.GetType()!
+                   .GetProperty(nameof(WqlResourceProperty<object>.Value))!
+                   .GetValue(property);
   }
 }

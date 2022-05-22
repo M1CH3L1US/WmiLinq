@@ -73,4 +73,8 @@ public readonly struct WqlResourceProperty<T> : IEnumerable<T> {
     throw new NotSupportedException("These operators are not supported at runtime. They merely serve as a utility" +
                                     "when using them as part of a query builder");
   }
+
+  public override string ToString() {
+    return Value!.ToString();
+  }
 }

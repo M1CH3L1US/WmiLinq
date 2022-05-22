@@ -18,4 +18,9 @@ public partial class SmsCollection {
 
   [Property(Name = "SmsIds", IsList = true)]
   private IEnumerable<int> _smsIds;
+
+  public SmsCollection GetSelf() {
+    return GetQueryableResource()
+      .Single(coll => coll.CollectionId == CollectionId);
+  }
 }
