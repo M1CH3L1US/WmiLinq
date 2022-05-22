@@ -5,15 +5,15 @@ using LinqToWql.Language.Statements;
 namespace LinqToWql.Language;
 
 public class WqlQueryRunner : IWqlQueryRunner {
-  private readonly IWqlQueryProcessor _queryProcessor;
+  private readonly WqlResourceContext _context;
 
   public WqlQueryRunner(WqlResourceContext context) {
-    _queryProcessor = context.QueryProcessor;
+    _context = context;
   }
 
   public T Execute<T>(Expression query) {
     var queryString = MakeQueryString(query, out var parseOptions);
-    return _queryProcessor.ExecuteQuery<T>(queryString, parseOptions);
+    return _context.QueryProcessor.ExecuteQuery<T>(queryString, parseOptions);
   }
 
   private string MakeQueryString(Expression query, out QueryResultParseOptions parseOptions) {
@@ -28,6 +28,7 @@ public class WqlQueryRunner : IWqlQueryRunner {
 
     var queryStatement = wqlBuilder.Build(out var options);
     parseOptions = options;
+    parseOptions.Context = _context;
     return queryStatement;
   }
 

@@ -46,16 +46,17 @@ public class ResourceSourceGenerator : ISourceGenerator {
 
     sb.AppendLine("using Microsoft.ConfigurationManagement.ManagementProvider;");
     sb.AppendLine("using LinqToWql.Model;");
+    sb.AppendLine("using LinqToWql.Infrastructure;");
     sb.AppendLine($"namespace {classModel.ContainingNamespace};");
-    sb.AppendLine($"public partial class {classModel.Name} : LinqToWql.Model.WqlResourceData {{");
+    sb.AppendLine($"public partial class {classModel.Name} : LinqToWql.Model.WqlResourceData<{classModel.Name}> {{");
 
     return sb;
   }
 
   private void AddResourceDataImpl(StringBuilder resource, ITypeSymbol classModel) {
     resource.AppendLine(
-      $"public {classModel.Name}(IResultObject resource) : base(resource) {{  }}");
-    resource.AppendLine($"public {classModel.Name}() : base(null) {{  }}");
+      $"public {classModel.Name}(WqlResourceContext context, IResultObject resource) : base(context, resource) {{  }}");
+    resource.AppendLine($"public {classModel.Name}(WqlResourceContext context) : base(context) {{  }}");
   }
 
   private void AddPropertyMapping(StringBuilder resource, ITypeSymbol classModel) {

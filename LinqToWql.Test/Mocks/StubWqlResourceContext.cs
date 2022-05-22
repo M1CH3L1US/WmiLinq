@@ -11,11 +11,6 @@ public class StubWqlResourceContext : WqlResourceContext {
   }
 
   public IEnumerable InvokeQuery(string query) {
-    return new List<SmsCollection> {
-      new() /*{
-        Name = "TestSmsCollection",
-        Description = "Test SMS Collection",
-      }*/
-    };
+    return new List<SmsCollection>();
   }
 }

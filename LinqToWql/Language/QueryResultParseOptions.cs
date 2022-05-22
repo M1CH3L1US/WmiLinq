@@ -1,8 +1,12 @@
-﻿namespace LinqToWql.Language;
+﻿using LinqToWql.Infrastructure;
+
+namespace LinqToWql.Language;
 
 public class QueryResultParseOptions {
   private readonly List<Func<IEnumerable<object>, object?>> _resultProcessors = new();
   public IEnumerable<Func<IEnumerable<object>, object?>> ResultProcessors => _resultProcessors;
+
+  public WqlResourceContext Context { get; set; }
 
   /// <summary>
   ///   If property is true, the query result will be parsed

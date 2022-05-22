@@ -1,5 +1,4 @@
 ﻿using LinqToWql.Language;
-using LinqToWql.Model;
 using Microsoft.ConfigurationManagement.ManagementProvider;
 
 namespace LinqToWql.Data;
@@ -41,12 +40,12 @@ public class ResultDataMapper {
     return resource;
   }
 
-  private object MapToSingleResourceProperty(WqlResourceData resource) {
+  private object MapToSingleResourceProperty(object resource) {
     var property = resource.GetType().GetProperty(_parseOptions.SinglePropertyToSelect!)!;
     return property.GetValue(resource);
   }
 
-  private object MapToAnonymousType(WqlResourceData resource, Type anonymousType) {
+  private object MapToAnonymousType(object resource, Type anonymousType) {
     var resourceType = resource.GetType();
     var properties = anonymousType.GetProperties();
     // Anonymous types have a single constructor
@@ -68,9 +67,7 @@ public class ResultDataMapper {
     return genericTypeName.Contains("AnonymousType");
   }
 
-  private WqlResourceData MapResultObjectToResource(IResultObject resultObject) {
-    var resourceCtor = _resourceType.GetConstructor(new[] {typeof(IResultObject)})!;
-    var resourceInstance = resourceCtor.Invoke(new object[] {resultObject});
-    return (WqlResourceData) resourceInstance;
+  private object MapResultObjectToResource(IResultObject resultObject) {
+    return Activator.CreateInstance(_resourceType, _parseOptions.Context, resultObject);
   }
 }

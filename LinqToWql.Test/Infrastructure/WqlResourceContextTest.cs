@@ -12,4 +12,13 @@ public class WqlResourceContextTest {
     sut.SmsCollection.Should().NotBeNull();
     sut.SmsCollection.Should().BeOfType<WqlResource<SmsCollection>>();
   }
+
+  [Fact]
+  public void CreateInstance_CreatesNewInstanceOfWqlResource_WhenTypeIsWqlResource() {
+    var sut = new StubWqlContext(new StubWqlContextOptions());
+
+    // var collection = sut.CreateInstance<SmsCollection>();
+
+    // collection.Should().BeOfType<SmsCollection>();
+  }
 }

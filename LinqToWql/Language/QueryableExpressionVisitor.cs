@@ -38,27 +38,39 @@ public abstract class QueryableExpressionVisitor : ExpressionVisitor {
       return (ConstantExpression) methodCallExpression.Arguments[argumentIndex];
     }
 
-    var sourceExpr = Visit(methodCallExpression.Arguments[0]);
+    var source = Visit(methodCallExpression.Arguments[0])!;
 
     return method.Name switch {
       // Custom methods
       nameof(QueryableExtensions.Having) =>
-        TranslateHaving(sourceExpr, GetLambdaExpressionFromArgument(1)),
+        TranslateHaving(source, GetLambdaExpressionFromArgument(1)),
       nameof(QueryableExtensions.Within) =>
-        TranslateWithin(sourceExpr, GetConstExpressionFromArgument(1)),
+        TranslateWithin(source, GetConstExpressionFromArgument(1)),
       nameof(QueryableExtensions.OrWhere) =>
-        TranslateOrWhere(sourceExpr, GetLambdaExpressionFromArgument(1)),
+        TranslateOrWhere(source, GetLambdaExpressionFromArgument(1)),
       //
       nameof(Queryable.Where) =>
-        TranslateWhere(sourceExpr, GetLambdaExpressionFromArgument(1)),
+        TranslateWhere(source, GetLambdaExpressionFromArgument(1)),
       nameof(Queryable.Select) =>
-        TranslateSelect(sourceExpr, GetLambdaExpressionFromArgument(1)),
+        TranslateSelect(source, GetLambdaExpressionFromArgument(1)),
       nameof(Queryable.Single) =>
-        TranslateSingle(sourceExpr, TryGetLambdaExpressionFromArgument(1)),
+        TranslateSingle(source, TryGetLambdaExpressionFromArgument(1)),
       nameof(Queryable.Count) =>
-        TranslateCount(sourceExpr),
+        TranslateCount(source),
       nameof(Queryable.SingleOrDefault) =>
-        TranslateSingleOrDefault(sourceExpr, TryGetLambdaExpressionFromArgument(1)),
+        TranslateSingleOrDefault(source, TryGetLambdaExpressionFromArgument(1)),
+      nameof(Queryable.All) =>
+        TranslateAll(source, GetLambdaExpressionFromArgument(1)),
+      nameof(Queryable.Any) =>
+        TranslateAny(source, TryGetLambdaExpressionFromArgument(1)),
+      nameof(Queryable.First) =>
+        TranslateFirst(source, TryGetLambdaExpressionFromArgument(1)),
+      nameof(Queryable.Skip) =>
+        TranslateSkip(source, GetConstExpressionFromArgument(1)),
+      nameof(Queryable.Take) =>
+        TranslateTake(source, GetConstExpressionFromArgument(1)),
+      nameof(Enumerable.AsEnumerable) =>
+        TranslateAsEnumerable(source),
       _ => null!
     };
   }
@@ -75,6 +87,12 @@ public abstract class QueryableExpressionVisitor : ExpressionVisitor {
   protected abstract Expression TranslateSingle(Expression source, LambdaExpression? lambdaExpression);
   protected abstract Expression TranslateCount(Expression source);
   protected abstract Expression TranslateSingleOrDefault(Expression source, LambdaExpression? lambdaExpression);
+  protected abstract Expression TranslateAll(Expression source, LambdaExpression lambda);
+  protected abstract Expression TranslateAny(Expression source, LambdaExpression? lambda);
+  protected abstract Expression TranslateFirst(Expression source, LambdaExpression? lambda);
+  protected abstract Expression TranslateSkip(Expression source, ConstantExpression count);
+  protected abstract Expression TranslateTake(Expression source, ConstantExpression count);
+  protected abstract Expression TranslateAsEnumerable(Expression source);
 
   # region WQL Methods
 

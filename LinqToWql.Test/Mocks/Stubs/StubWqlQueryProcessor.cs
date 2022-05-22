@@ -25,7 +25,7 @@ public class StubWqlQueryProcessor : IWqlQueryProcessor {
 
   private IResultObject MakeResult() {
     var mockData = new Dictionary<string, object> {
-      {"Name", "Stub Collection"},
+      {"Name", "Collection"},
       {"Owner", "Michael"},
       {"SmsIds", "1--11--1"},
       {"CollectionId", "AE.BD.213:130"},

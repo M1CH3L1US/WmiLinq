@@ -8,7 +8,13 @@ namespace LinqToWql.Language;
 
 public class WqlQueryBuilder {
   private readonly StringBuilder _query = new();
+
+  /// <summary>
+  ///   We use a HashSet to only have unique select
+  ///   properties.
+  /// </summary>
   private readonly HashSet<string> _selectProperties = new();
+
   private readonly WqlStatement _source;
   private readonly List<WqlStatement> _statements = new();
 

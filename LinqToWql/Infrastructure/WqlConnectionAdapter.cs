@@ -20,4 +20,12 @@ public class WqlConnectionAdapter : IWqlConnection {
   public void Connect(string server, string username, string password) {
     _connection.Connect(server, username, password);
   }
+
+  public IResultObject CreateInstance(string className) {
+    return _connection.CreateInstance(className);
+  }
+
+  public IResultObject ExecuteMethod(string methodClass, string methodName, Dictionary<string, object> parameters) {
+    return _connection.ExecuteMethod(methodClass, methodName, parameters);
+  }
 }

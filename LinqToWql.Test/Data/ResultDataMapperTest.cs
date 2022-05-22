@@ -9,7 +9,7 @@ public class ResultDataMapperTest {
   [Fact]
   public void Map_MapsIResultObjectToResource_WhenOutputTypeIsResource() {
     var instance = _resource
-      .Single(r => r.Description == "Foo");
+      .Single(r => r.Name == "Collection");
 
     instance.Should().BeOfType<SmsCollection>();
   }

@@ -1,5 +1,6 @@
 ﻿using System.Reflection;
 using LinqToWql.Language;
+using LinqToWql.Model;
 
 namespace LinqToWql.Infrastructure;
 
@@ -9,11 +10,11 @@ public abstract class WqlResourceContext : IDisposable {
   public IWqlConnection Connection => _options.WqlConnection;
   public IWqlQueryProcessor QueryProcessor => _options.WqlQueryProcessor;
 
-  private IQueryProvider QueryProvider { get; set; }
+  private IQueryProvider QueryProvider { get; }
 
   public WqlResourceContext(IWqlContextOptions options) {
     _options = options;
-    MakeQueryProvider();
+    QueryProvider = MakeQueryProvider();
     MapResources();
   }
 
@@ -21,9 +22,17 @@ public abstract class WqlResourceContext : IDisposable {
     Connection.Dispose();
   }
 
-  private void MakeQueryProvider() {
+  public T CreateInstance<T>() where T : WqlResourceData<T> {
+    return (T) Activator.CreateInstance(typeof(T), this);
+  }
+
+  public WqlResource<T> GetResource<T>() {
+    return new WqlResource<T>(QueryProvider);
+  }
+
+  private IQueryProvider MakeQueryProvider() {
     var queryRunner = new WqlQueryRunner(this);
-    QueryProvider = new WqlQueryProvider(queryRunner);
+    return new WqlQueryProvider(queryRunner);
   }
 
   private void MapResources() {
