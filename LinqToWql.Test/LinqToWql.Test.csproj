@@ -24,19 +24,16 @@
     </ItemGroup>
 
     <ItemGroup>
+        <ProjectReference OutputItemType="Analyzer" Include="..\LinqToWql.CodeGen\LinqToWql.CodeGen.csproj" />
         <ProjectReference Include="..\LinqToWql\LinqToWql.csproj" />
     </ItemGroup>
 
     <ItemGroup>
-        <ProjectReference OutputItemType="Analyzer" Include="..\LinqToWql.CodeGen\LinqToWql.CodeGen.csproj" />
-    </ItemGroup>
-
-    <ItemGroup>
         <Reference Include="AdminUI.WqlQueryEngine">
-            <HintPath>..\ref\WqlQueryEngine.dll</HintPath>
+          <HintPath>..\..\MasterOrchestrationManager\_ref_assemblies_\AdminUI.WqlQueryEngine.dll</HintPath>
         </Reference>
         <Reference Include="Microsoft.ConfigurationManagement.ManagementProvider">
-            <HintPath>..\ref\Microsoft.ConfigurationManagement.ManagementProvider.dll</HintPath>
+          <HintPath>..\..\MasterOrchestrationManager\_ref_assemblies_\Microsoft.ConfigurationManagement.ManagementProvider.dll</HintPath>
         </Reference>
         <Reference Include="System.Windows.Forms">
             <HintPath>C:\Program Files\dotnet\shared\Microsoft.WindowsDesktop.App\6.0.5\System.Windows.Forms.dll</HintPath>

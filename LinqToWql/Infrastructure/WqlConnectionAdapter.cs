@@ -28,4 +28,8 @@ public class WqlConnectionAdapter : IWqlConnection {
   public IResultObject ExecuteMethod(string methodClass, string methodName, Dictionary<string, object> parameters) {
     return _connection.ExecuteMethod(methodClass, methodName, parameters);
   }
+
+  public IResultObject CreateEmbeddedInstance(string className) {
+    return _connection.CreateEmbeddedObjectInstance(className);
+  }
 }

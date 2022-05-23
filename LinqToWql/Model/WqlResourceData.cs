@@ -6,7 +6,7 @@ namespace LinqToWql.Model;
 
 public abstract class WqlResourceData<T> where T : WqlResourceData<T> {
   protected readonly WqlResourceContext Context;
-  protected readonly IResultObject Resource;
+  public readonly IResultObject Resource;
 
   /// <summary>
   ///   Creates a new WqlResourceData wrapper object
@@ -27,8 +27,7 @@ public abstract class WqlResourceData<T> where T : WqlResourceData<T> {
   /// <param name="context"></param>
   public WqlResourceData(WqlResourceContext context) {
     Context = context;
-    var instanceName = GetResourceClassName();
-    Resource = context.Connection.CreateInstance(instanceName);
+    Resource = context.CreateObject<T>();
   }
 
   /// <summary>
@@ -54,16 +53,6 @@ public abstract class WqlResourceData<T> where T : WqlResourceData<T> {
   public void Update() {
     Resource.Put();
     Resource.Get();
-  }
-
-  /// <summary>
-  ///   Returns the name of the resouce class
-  ///   defined through the <see cref="ResourceAttribute" /> attribute.
-  /// </summary>
-  /// <returns></returns>
-  private string GetResourceClassName() {
-    var resourceAttribute = GetType().GetCustomAttribute<ResourceAttribute>();
-    return resourceAttribute.Name;
   }
 
   /// <summary>

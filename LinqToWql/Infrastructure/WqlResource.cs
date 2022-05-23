@@ -41,6 +41,6 @@ public class WqlResource<T> : IQueryable<T> {
       throw new InvalidOperationException($"Type {resourceType.Name} is not a valid WMI resource.");
     }
 
-    return resourceAttribute.Name;
+    return resourceAttribute.ClassName;
   }
 }

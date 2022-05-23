@@ -1,6 +1,7 @@
 ﻿using System.Reflection;
 using LinqToWql.Language;
 using LinqToWql.Model;
+using Microsoft.ConfigurationManagement.ManagementProvider;
 
 namespace LinqToWql.Infrastructure;
 
@@ -22,8 +23,43 @@ public abstract class WqlResourceContext : IDisposable {
     Connection.Dispose();
   }
 
-  public T CreateInstance<T>() where T : WqlResourceData<T> {
+  /// <summary>
+  /// Creates a new wrapped resource of type T
+  /// </summary>
+  /// <typeparam name="T"></typeparam>
+  /// <returns></returns>
+  public T CreateResourceInstance<T>() where T : WqlResourceData<T> {
     return (T) Activator.CreateInstance(typeof(T), this);
+  }
+
+  /// <summary>
+  /// Creates a resource wrapper class of 
+  /// type T using the result object provided.
+  /// </summary>
+  /// <typeparam name="T"></typeparam>
+  /// <param name="resultObject"></param>
+  /// <returns></returns>
+  public T CreateResourceInstance<T>(IResultObject resultObject) {
+    return (T)Activator.CreateInstance(typeof(T), this, resultObject);
+  }
+
+  /// <summary>
+  /// Creates an IResultObject for the
+  /// resource or embedded resource defined
+  /// through the type parameter <see cref="T"/>.
+  /// </summary>
+  /// <typeparam name="T"></typeparam>
+  /// <returns></returns>
+  public IResultObject CreateObject<T>() where T : WqlResourceData<T> {
+    var resourceType = typeof(T);
+    var resourceAttribute = resourceType.GetCustomAttribute<ResourceAttribute>();
+    var embeddedResourceAttribute = resourceType.GetCustomAttribute<EmbeddedResourceAttribute>();
+
+    if(embeddedResourceAttribute is not null) {
+     return Connection.CreateEmbeddedInstance(embeddedResourceAttribute.ClassName);
+    }
+
+    return Connection.CreateInstance(resourceAttribute.ClassName);
   }
 
   public WqlResource<T> GetResource<T>() where T : WqlResourceData<T> {

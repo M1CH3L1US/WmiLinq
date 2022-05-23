@@ -2,8 +2,11 @@
 
 namespace LinqToWql.Test.Mocks;
 
-[Resource(Name = "SMS_Collection")]
+[Resource(ClassName = "SMS_Collection")]
 public partial class SmsCollection {
+  [Property(Name = "X")]
+  private SmsCollectionRule _rules;
+
   [Property(Name = "CollectionId")]
   private string _collectionId;
 
@@ -16,7 +19,7 @@ public partial class SmsCollection {
   [Property(Name = "Owner")]
   private string _owner;
 
-  [Property(Name = "SmsIds", IsList = true)]
+  [Property(Name = "SmsIds")]
   private IEnumerable<int> _smsIds;
 
   public SmsCollection GetSelf() {

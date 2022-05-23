@@ -14,15 +14,15 @@
     </ItemGroup>
 
     <ItemGroup>
-        <Reference Include="AdminUI.WqlQueryEngine">
-            <HintPath>..\ref\WqlQueryEngine.dll</HintPath>
-        </Reference>
-        <Reference Include="Microsoft.ConfigurationManagement.ManagementProvider">
-            <HintPath>..\ref\Microsoft.ConfigurationManagement.ManagementProvider.dll</HintPath>
-        </Reference>
+        <PackageReference Include="Microsoft.CSharp" Version="4.7.0" />
     </ItemGroup>
 
     <ItemGroup>
-        <PackageReference Include="Microsoft.CSharp" Version="4.7.0" />
+      <Reference Include="AdminUI.WqlQueryEngine">
+        <HintPath>..\..\MasterOrchestrationManager\_ref_assemblies_\AdminUI.WqlQueryEngine.dll</HintPath>
+      </Reference>
+      <Reference Include="Microsoft.ConfigurationManagement.ManagementProvider">
+        <HintPath>..\..\MasterOrchestrationManager\_ref_assemblies_\Microsoft.ConfigurationManagement.ManagementProvider.dll</HintPath>
+      </Reference>
     </ItemGroup>
 </Project>

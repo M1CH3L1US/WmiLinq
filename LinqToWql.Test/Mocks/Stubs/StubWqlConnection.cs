@@ -25,4 +25,9 @@ public class StubWqlConnection : IWqlConnection {
   public IResultObject ExecuteMethod(string methodClass, string methodName, Dictionary<string, object> parameters) {
     throw new NotImplementedException();
   }
+
+  public IResultObject CreateEmbeddedInstance(string className)
+  {
+    throw new NotImplementedException();
+  }
 }
