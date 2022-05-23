@@ -1,6 +1,8 @@
-﻿using System.Text;
+﻿using System.Diagnostics;
+using System.Text;
 using System.Text.RegularExpressions;
 using Microsoft.CodeAnalysis;
+using Microsoft.CodeAnalysis.CSharp;
 using Microsoft.CodeAnalysis.CSharp.Syntax;
 
 namespace LinqToWql.CodeGen;
@@ -10,9 +12,11 @@ public class ResourceSourceGenerator : ISourceGenerator {
   public void Initialize(GeneratorInitializationContext context) {
   }
 
+  public const string ResourceAttributeName = "Resource";
+  public const string EmbeddedResourceAttributeName = "EmbeddedResource";
+
   public void Execute(GeneratorExecutionContext context) {
     var compilation = context.Compilation;
-    var resourceAttributeName = "Resource";
 
     foreach (var syntaxTree in compilation.SyntaxTrees) {
       var semanticModel = compilation.GetSemanticModel(syntaxTree);
@@ -24,27 +28,42 @@ public class ResourceSourceGenerator : ISourceGenerator {
       var withResourceAttr = classesInTree.Where(x => x.AttributeLists
                                                        .SelectMany(al => al.Attributes)
                                                        .Any(attributeSyntax =>
-                                                         attributeSyntax.Name.ToString() ==
-                                                         resourceAttributeName));
+                                                       {
+                                                         var attributeName = attributeSyntax.Name.ToString();
+                                                         return attributeName == ResourceAttributeName || attributeName == EmbeddedResourceAttributeName;
+                                                       }));
 
       var classModels = withResourceAttr.Select(x => semanticModel.GetDeclaredSymbol(x))
                                         .OfType<ITypeSymbol>();
 
 
       foreach (var classModel in classModels) {
+        var usingStatementsToAdd = new HashSet<string>();
         var resource = AddResourceClass(classModel);
         AddResourceDataImpl(resource, classModel);
-        AddPropertyMapping(resource, classModel);
-        AddDefaultPropertyMapping(resource, classModel);
+        AddPropertyMapping(resource, classModel, usingStatementsToAdd);
         AddClassClosing(resource, classModel);
-        context.AddSource($"{classModel.Name}.g.cs", resource.ToString());
+
+        var resourceString = PrependNewUsingStatements(resource, usingStatementsToAdd);
+
+        context.AddSource($"{classModel.Name}.g.cs", resourceString);
       }
     }
+  }
+
+  private string PrependNewUsingStatements(StringBuilder resource, HashSet<string> usingStatementsToAdd) {
+    var usingStatements = usingStatementsToAdd.Select(u => $"using {u};");
+    var usingStatementString = string.Join("\n", usingStatements);
+    var resourceString = resource.ToString();
+    
+    return usingStatementString + "\n" + resourceString;
   }
 
   private StringBuilder AddResourceClass(ITypeSymbol classModel) {
     var sb = new StringBuilder();
 
+    sb.AppendLine("using System;");
+    sb.AppendLine("using System.Linq;");
     sb.AppendLine("using Microsoft.ConfigurationManagement.ManagementProvider;");
     sb.AppendLine("using LinqToWql.Model;");
     sb.AppendLine("using LinqToWql.Infrastructure;");
@@ -60,7 +79,7 @@ public class ResourceSourceGenerator : ISourceGenerator {
     resource.AppendLine($"public {classModel.Name}(WqlResourceContext context) : base(context) {{  }}");
   }
 
-  private void AddPropertyMapping(StringBuilder resource, ITypeSymbol classModel) {
+  private void AddPropertyMapping(StringBuilder resource, ITypeSymbol classModel, HashSet<string> namespacesToAppend) {
     var properties = classModel.GetMembers()
                                .OfType<IFieldSymbol>()
                                .Where(p => p.GetAttributes()
@@ -89,43 +108,92 @@ public class ResourceSourceGenerator : ISourceGenerator {
       }
 
       var propertyName = (string) GetNamedArgumentFromAttribute("Name")!;
-      var isArray = (bool) (GetNamedArgumentFromAttribute("IsList") ?? false);
-      var propertyType = property.Type;
 
-      var propertyGenericType = "";
-      var fullTypeName = propertyType.ToString();
-      var regex = new Regex(".*\\<(.*)\\>.*");
-      var match = regex.Match(fullTypeName);
-      var typeGenericArgumentCollection = match.Groups?[1];
+      var propertyType = new ResourcePropertyType(property.Type);
+      var propertyField = new ResourcePropertyBuilder(propertyName, propertyType);
 
-      if (typeGenericArgumentCollection is not null) {
-        propertyGenericType = typeGenericArgumentCollection.Value;
+      if (propertyType.IsResource && propertyType.IsEnumerable) {
+        AddPropertyEnumerableResource(propertyField, propertyType);
+      } else if(propertyType.IsResource) {
+        AddPropertyResource(propertyField, propertyType);
+      } else if(propertyType.IsEnumerable) {
+        AddPropertyEnumerable(propertyField, propertyType);
+      } else {
+        AddPropertyRegularField(propertyField, propertyType);
       }
 
-      resource.AppendLine($"public WqlResourceProperty<{propertyType}> {propertyName} {{");
-
-      if (isArray) {
-        resource.AppendLine(
-          $@"get => new WqlResourceProperty<{propertyType}>(Resource[""{propertyName}""].ObjectArrayValue.Cast<{propertyGenericType}>());");
-        resource.AppendLine(
-          $@"set => Resource[""{propertyName}""].ObjectArrayValue = value.Value.Cast<object>().ToArray();");
-      }
-      else {
-        resource.AppendLine($@"get => ({propertyType}) Resource[""{propertyName}""].ObjectValue;");
-        resource.AppendLine($@"set => Resource[""{propertyName}""].ObjectValue = value;");
-      }
-
-      resource.AppendLine("}");
+      namespacesToAppend.Add(propertyType.RequiresNamespace);
+      resource.AppendLine(propertyField.ToString());
     }
   }
 
-  private void AddDefaultPropertyMapping(StringBuilder resource, ITypeSymbol classModel) {
-    resource.AppendLine("public WqlResourceProperty<string> ResourceId {");
-    resource.AppendLine(@"get => Resource[""ResourceID""].StringValue;");
-    resource.AppendLine("}");
+  private void AddPropertyRegularField(ResourcePropertyBuilder propertyField, ResourcePropertyType propertyType) {
+    propertyField.DefineProperty(propertyType.GetWqlResourcePropertyType());
+
+    propertyField.DefineGetter(appendLine => { 
+      appendLine(@$"return ({propertyType.TypeName}) Resource[""{propertyField.PropertyName}""].{propertyType.GetResourceFieldName()};");
+    });
+
+    propertyField.DefineSetter(appendLine => {
+      appendLine(@$"Resource[""{propertyField.PropertyName}""].{propertyType.GetResourceFieldName()} = value;");
+    });
+  }
+
+  private void AddPropertyEnumerable(ResourcePropertyBuilder propertyField, ResourcePropertyType propertyType)
+  {
+    propertyField.DefineProperty($"IEnumerable<{propertyType.EnumerableType}>");
+
+    propertyField.DefineGetter(appendLine => {
+      appendLine(@$"var value = Resource[""{propertyField.PropertyName}""].{propertyType.GetResourceFieldName()} ?? Enumerable.Empty<{propertyType.EnumerableType}>();");
+      appendLine(@$"return value.Cast<{propertyType.EnumerableType}>();");
+    });
+
+    propertyField.DefineSetter(appendLine => {
+      appendLine(@$"Resource[""{propertyField.PropertyName}""].{propertyType.GetResourceFieldName()} = value.ToArray();");
+    });
+  }
+
+  private void AddPropertyResource(ResourcePropertyBuilder propertyField, ResourcePropertyType propertyType) {
+    propertyField.DefineComment(AppendWqlResourceWarningComment);
+
+    propertyField.DefineProperty(propertyType.TypeName);
+
+    propertyField.DefineGetter(appendLine => {
+      appendLine(@$"var item = Resource.GetSingleItem(""{propertyField.PropertyName}"");");
+      appendLine(@$"return Context.CreateResourceInstance<{propertyType.TypeName}>(item);");
+    });
+
+    propertyField.DefineSetter(appendLine => {
+      appendLine(@$"Resource.SetSingleItem(""{propertyField.PropertyName}"", value.Resource);");
+    });
+  }
+  private void AddPropertyEnumerableResource(ResourcePropertyBuilder propertyField, ResourcePropertyType propertyType) {
+    propertyField.DefineComment(AppendWqlResourceWarningComment);
+
+    propertyField.DefineProperty($"List<{propertyType.EnumerableType}>");
+
+    propertyField.DefineGetter(appendLine => {
+      appendLine($"return Resource");
+      appendLine(@$".GetArrayItems(""{propertyField.PropertyName}"")");
+      appendLine($".Select(item => Context.CreateResourceInstance<{propertyType.EnumerableType}>(item))");
+      appendLine($".ToList();");
+    });
+
+    propertyField.DefineSetter(appendLine => {
+      appendLine("var items = value.Select(resource => resource.Resource).ToList();");
+      appendLine($@"Resource.SetArrayItems(""{propertyField.PropertyName}"", items);");
+    });
+  }
+
+  private void AppendWqlResourceWarningComment(AppendLineFn appendLine) {
+    appendLine("/// <summary>");
+    appendLine("/// This property cannot be used in Linq2Wql queries as it it not possible to query for it using WQL.");
+    appendLine("/// Use this property only as a getter / setter for its values.");
+    appendLine("/// </summary>");
   }
 
   private void AddClassClosing(StringBuilder resource, ITypeSymbol classModel) {
     resource.AppendLine("}");
   }
 }
+
