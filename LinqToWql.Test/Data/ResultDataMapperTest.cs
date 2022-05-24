@@ -1,10 +1,16 @@
 ﻿using LinqToWql.Infrastructure;
 using LinqToWql.Test.Mocks;
+using LinqToWql.Test.Mocks.Resources;
 
 namespace LinqToWql.Test.Data;
 
 public class ResultDataMapperTest {
-  private static readonly WqlResource<SmsCollection> _resource = StubResourceFactory.Create<SmsCollection>();
+  private static readonly WqlResource<SmsCollection> _resource =
+    MockResourceFactory<SmsCollection>.CreateWithResultValue(() => new SmsCollection {
+      Description = "Foo",
+      Name = "Collection",
+      CollectionId = "CollectionId"
+    });
 
   [Fact]
   public void Map_MapsIResultObjectToResource_WhenOutputTypeIsResource() {

@@ -1,4 +1,5 @@
 ﻿using LinqToWql.Infrastructure;
+using LinqToWql.Test.Mocks.Resources;
 
 namespace LinqToWql.Test.Mocks;
 

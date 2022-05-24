@@ -16,7 +16,10 @@ public class StubResultObject : IResultObject {
   public string OverridingObjectClass { get; }
 
   public IQueryPropertyItem this[string name] {
-    get => new StubQueryPropertyItem(_values.First()[name]);
+    get {
+      _values.First().TryGetValue(name, out var value);
+      return new StubQueryPropertyItem(value);
+    }
     set => _values.First()[name] = value;
   }
 
@@ -32,6 +35,10 @@ public class StubResultObject : IResultObject {
   public Dictionary<string, IResultObject> RegMultiStringLists { get; set; }
   public List<IResultObject> GenericsArray { get; }
   public Guid UniqueIdentifier { get; }
+
+  public StubResultObject(Dictionary<string, object> value) {
+    _values = new List<Dictionary<string, object>> {value};
+  }
 
   public StubResultObject(List<Dictionary<string, object>> values) {
     _values = values;

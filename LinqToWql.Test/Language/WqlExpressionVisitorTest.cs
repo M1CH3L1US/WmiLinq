@@ -2,11 +2,13 @@
 using LinqToWql.Language;
 using LinqToWql.Language.Statements;
 using LinqToWql.Test.Mocks;
+using LinqToWql.Test.Mocks.Resources;
 
 namespace LinqToWql.Test.Language;
 
 public class WqlExpressionVisitorTest {
-  private static readonly WqlResource<SmsCollection> _resource = StubResourceFactory.Create<SmsCollection>();
+  private static readonly WqlResource<SmsCollection> _resource =
+    MockResourceFactory<SmsCollection>.CreateWithResultValue(() => new SmsCollection());
 
   private static readonly WqlExpressionVisitor _sut = new();
 

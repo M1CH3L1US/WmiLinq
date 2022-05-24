@@ -1,16 +1,16 @@
 ﻿using LinqToWql.Infrastructure;
 using LinqToWql.Language;
 using LinqToWql.Test.Mocks;
+using LinqToWql.Test.Mocks.Resources;
 using LinqToWql.Test.Mocks.Stubs;
-using Moq;
 
 namespace LinqToWql.Test.Language;
 
 public class WqlQueryRunnerTest {
   private const string NewLine = "\r\n";
 
-  private static readonly WqlResource<SmsCollection> _resource = StubResourceFactory.Create<SmsCollection>();
-
+  private static readonly WqlResource<SmsCollection> _resource =
+    MockResourceFactory<SmsCollection>.CreateWithResultValue(() => new SmsCollection());
 
   [Fact]
   public void Test_ExampleQuery() {
@@ -20,9 +20,9 @@ public class WqlQueryRunnerTest {
 
 
     var sut = MakeQueryRunner(out var queryProcessor);
-    sut.Execute<SmsCollection>(q.Expression);
+    sut.Execute<IEnumerable<SmsCollection>>(q.Expression);
 
-    var arg = queryProcessor.Invocations.First().Arguments.First();
+    var arg = queryProcessor.LastQuery;
 
     arg.Should().Be("SELECT Name, Description"
                     + NewLine +
@@ -40,9 +40,9 @@ public class WqlQueryRunnerTest {
                               .Expression;
 
     var sut = MakeQueryRunner(out var queryProcessor);
-    sut.Execute<SmsCollection>(expression);
+    sut.Execute<IEnumerable<SmsCollection>>(expression);
 
-    var arg = queryProcessor.Invocations.First().Arguments.First();
+    var arg = queryProcessor.LastQuery;
 
     arg.Should().Be("SELECT *"
                     + NewLine +
@@ -52,11 +52,12 @@ public class WqlQueryRunnerTest {
                     + NewLine);
   }
 
-  private IWqlQueryRunner MakeQueryRunner(out Mock<IWqlQueryProcessor> queryProcessorMock) {
-    var options = new StubWqlContextOptions();
-    queryProcessorMock = new Mock<IWqlQueryProcessor>();
-    options.WqlQueryProcessor = queryProcessorMock.Object;
-    var context = new StubWqlResourceContext(options);
+  private IWqlQueryRunner MakeQueryRunner(out StubWqlQueryProcessor queryProcessor) {
+    queryProcessor =
+      new StubWqlQueryProcessor(new MockResultObjectBuilder<SmsCollection>().Build());
+    var options = new StubWqlContextOptions(null);
+    options.WqlQueryProcessor = queryProcessor;
+    var context = new StubWqlContext(options);
     return new WqlQueryRunner(context);
   }
 }

@@ -4,6 +4,7 @@ using LinqToWql.Language;
 using LinqToWql.Language.Expressions;
 using LinqToWql.Model;
 using LinqToWql.Test.Mocks;
+using LinqToWql.Test.Mocks.Resources;
 
 namespace LinqToWql.Test.Language;
 
@@ -11,7 +12,9 @@ public class QueryBuilderTest {
   private const string ResourceName = "SMS_Collection";
   private const string NewLine = "\r\n";
 
-  private static readonly WqlResource<SmsCollection> _resource = StubResourceFactory.Create<SmsCollection>();
+  private static readonly WqlResource<SmsCollection> _resource =
+    MockResourceFactory<SmsCollection>.CreateWithResultValue(() => new SmsCollection());
+
   private static readonly Expression _root = Expression.Constant(_resource);
 
   [Fact]

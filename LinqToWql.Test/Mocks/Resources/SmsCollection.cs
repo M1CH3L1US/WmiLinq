@@ -1,12 +1,9 @@
 ﻿using LinqToWql.Model;
 
-namespace LinqToWql.Test.Mocks;
+namespace LinqToWql.Test.Mocks.Resources;
 
 [Resource(ClassName = "SMS_Collection")]
 public partial class SmsCollection {
-  [Property(Name = "X")]
-  private SmsCollectionRule _rules;
-
   [Property(Name = "CollectionId")]
   private string _collectionId;
 
@@ -19,11 +16,16 @@ public partial class SmsCollection {
   [Property(Name = "Owner")]
   private string _owner;
 
+  [Property(Name = "Rules")]
+  private SmsCollectionRule _rules;
+
   [Property(Name = "SmsIds")]
   private IEnumerable<int> _smsIds;
 
+  public SmsCollection() : base(null, null) {
+  }
+
   public SmsCollection GetSelf() {
-    return GetQueryableResource()
-      .Single(coll => coll.CollectionId == CollectionId);
+    return GetQueryableResource().Single(coll => coll.CollectionId == CollectionId);
   }
 }

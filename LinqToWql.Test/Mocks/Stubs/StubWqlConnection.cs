@@ -1,10 +1,15 @@
 ﻿using LinqToWql.Infrastructure;
-using LinqToWql.Test.Mocks.ResultObject;
 using Microsoft.ConfigurationManagement.ManagementProvider;
 
 namespace LinqToWql.Test.Mocks.Stubs;
 
 public class StubWqlConnection : IWqlConnection {
+  private readonly IResultObject _resultObject;
+
+  public StubWqlConnection(IResultObject resultObject) {
+    _resultObject = resultObject;
+  }
+
   public void Dispose() {
     throw new NotImplementedException();
   }
@@ -18,16 +23,14 @@ public class StubWqlConnection : IWqlConnection {
   }
 
   public IResultObject CreateInstance(string className) {
-    var obj = new Dictionary<string, object>();
-    return new StubResultObject(new List<Dictionary<string, object>> {obj});
+    return _resultObject;
   }
 
   public IResultObject ExecuteMethod(string methodClass, string methodName, Dictionary<string, object> parameters) {
     throw new NotImplementedException();
   }
 
-  public IResultObject CreateEmbeddedInstance(string className)
-  {
+  public IResultObject CreateEmbeddedInstance(string className) {
     throw new NotImplementedException();
   }
 }

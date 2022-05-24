@@ -2,7 +2,7 @@
 using Microsoft.ConfigurationManagement.AdminConsole.Schema;
 using Microsoft.ConfigurationManagement.ManagementProvider;
 
-namespace LinqToWql.Test.Mocks;
+namespace LinqToWql.Test.Mocks.ResultObject;
 
 public class StubQueryPropertyItem : IQueryPropertyItem {
   private object _value { get; set; }
