@@ -3,12 +3,12 @@ using Microsoft.ConfigurationManagement.ManagementProvider;
 
 namespace LinqToWql.Data;
 
-public class ResultDataMapper {
+public class ResultDataMapper<TResult> {
   private readonly QueryResultParseOptions _parseOptions;
   private readonly Type _resourceType;
-  private readonly IEnumerable<IResultObject> _resultObjects;
+  private readonly IEnumerable<IResourceObject> _resultObjects;
 
-  public ResultDataMapper(IEnumerable<IResultObject> resultObjects, QueryResultParseOptions parseOptions) {
+  public ResultDataMapper(IEnumerable<IResourceObject> resultObjects, QueryResultParseOptions parseOptions) {
     _resultObjects = resultObjects;
     _parseOptions = parseOptions;
     _resourceType = parseOptions.ResourceType;
@@ -26,7 +26,7 @@ public class ResultDataMapper {
     return result!;
   }
 
-  private object ApplyTypeMappingInternal(IResultObject resultObject) {
+  private object ApplyTypeMappingInternal(IResourceObject resultObject) {
     var resource = MapResultObjectToResource(resultObject);
 
     if (_parseOptions.ShouldSelectSingleProperty) {
@@ -34,7 +34,7 @@ public class ResultDataMapper {
     }
 
     if (IsAnonymousType()) {
-      return MapToAnonymousType(resource, _parseOptions.QueryResultType);
+      return MapToAnonymousType(resource, typeof(TResult));
     }
 
     return resource;
@@ -63,11 +63,11 @@ public class ResultDataMapper {
   }
 
   private bool IsAnonymousType() {
-    var genericTypeName = _parseOptions.QueryResultType.Name;
+    var genericTypeName = typeof(TResult).Name;
     return genericTypeName.Contains("AnonymousType");
   }
 
-  private object MapResultObjectToResource(IResultObject resultObject) {
+  private object MapResultObjectToResource(IResourceObject resultObject) {
     return Activator.CreateInstance(_resourceType, _parseOptions.Context, resultObject);
   }
 }

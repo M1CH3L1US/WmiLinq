@@ -1,4 +1,5 @@
 ﻿using System.Linq.Expressions;
+using LinqToWql.Data;
 using LinqToWql.Infrastructure;
 using LinqToWql.Language.Statements;
 
@@ -13,7 +14,25 @@ public class WqlQueryRunner : IWqlQueryRunner {
 
   public T Execute<T>(Expression query) {
     var queryString = MakeQueryString(query, out var parseOptions);
-    return _context.QueryProcessor.ExecuteQuery<T>(queryString, parseOptions);
+    var queryResult = _context.QueryProcessor.ExecuteQuery(queryString, parseOptions);
+
+    // The ToList call ensures that the enumerations of the items have taken place
+    // such that we no longer rely on the enumerator of IResultObject that might
+    // still have a connection to the wql query server.
+    var resultObjectsAsList = queryResult.ToList();
+
+    var mapper = new ResultDataMapper<T>(resultObjectsAsList, parseOptions);
+    var mappedResultObject = mapper.ApplyTypeMapping();
+
+    if (typeof(T).IsEnumerable(out var enumerableType)) {
+      //  We need this additional conversion step through
+      //  Enumerable.Cast[TResult] because we cannot cast
+      //  List[object] or IEnumerable[object] to T,
+      //  which is IEnumerable[TResult]
+      return (T) ((IEnumerable<object>)mappedResultObject).RuntimeCast(enumerableType);
+    }
+
+    return (T)mappedResultObject;
   }
 
   private string MakeQueryString(Expression query, out QueryResultParseOptions parseOptions) {

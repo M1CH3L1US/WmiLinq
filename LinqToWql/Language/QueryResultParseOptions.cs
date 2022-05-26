@@ -5,7 +5,6 @@ namespace LinqToWql.Language;
 public class QueryResultParseOptions {
   private readonly List<Func<IEnumerable<object>, object?>> _resultProcessors = new();
   public IEnumerable<Func<IEnumerable<object>, object?>> ResultProcessors => _resultProcessors;
-
   public WqlResourceContext Context { get; set; }
 
   /// <summary>
@@ -21,12 +20,6 @@ public class QueryResultParseOptions {
   ///   was created.
   /// </summary>
   public Type ResourceType { get; set; }
-
-  /// <summary>
-  ///   The type to which the query result objects
-  ///   should be parsed to.
-  /// </summary>
-  public Type QueryResultType { get; set; }
 
   /// <summary>
   ///   Add a post processor function for the query result.

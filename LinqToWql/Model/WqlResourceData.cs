@@ -1,4 +1,5 @@
 ﻿using System.Reflection;
+using LinqToWql.Data;
 using LinqToWql.Infrastructure;
 using Microsoft.ConfigurationManagement.ManagementProvider;
 
@@ -6,7 +7,7 @@ namespace LinqToWql.Model;
 
 public abstract class WqlResourceData<T> where T : WqlResourceData<T> {
   protected readonly WqlResourceContext Context;
-  public readonly IResultObject Resource;
+  public IResourceObject Resource { get; }
 
   /// <summary>
   ///   Creates a new WqlResourceData wrapper object
@@ -14,8 +15,8 @@ public abstract class WqlResourceData<T> where T : WqlResourceData<T> {
   /// </summary>
   /// <param name="context"></param>
   /// <param name="resource"></param>
-  public WqlResourceData(WqlResourceContext context, IResultObject resource) {
-    Context = context;
+  public WqlResourceData(IResourceObject resource) {
+    Context = resource.Context;
     Resource = resource;
   }
 
@@ -38,9 +39,9 @@ public abstract class WqlResourceData<T> where T : WqlResourceData<T> {
   /// <param name="command"></param>
   /// <param name="args"></param>
   /// <returns></returns>
-  protected IResultObject ExecuteMethod(string command, params Tuple<string, dynamic>[] args) {
+  protected T ExecuteMethod<T>(string command, params Tuple<string, dynamic>[] args) where T : IResource {
     var dictArgs = args.ToDictionary(x => x.Item1, x => (object) x.Item2);
-    return Resource.ExecuteMethod(command, dictArgs);
+    return Resource.ExecuteMethod<T>(command, dictArgs);
   }
 
   protected Tuple<string, dynamic> Parameter(string name, dynamic value) {
@@ -51,8 +52,7 @@ public abstract class WqlResourceData<T> where T : WqlResourceData<T> {
   ///   Updates the wrapped resource on the remote server.
   /// </summary>
   public void Update() {
-    Resource.Put();
-    Resource.Get();
+    Resource.Update();
   }
 
   /// <summary>

@@ -1,4 +1,5 @@
 ﻿using System.Collections;
+using LinqToWql.Infrastructure;
 using Microsoft.ConfigurationManagement.ManagementProvider;
 
 namespace LinqToWql.Data;
@@ -7,14 +8,17 @@ namespace LinqToWql.Data;
 ///   Wrapper for IResultObject to easily iterate over it's
 ///   result items.
 /// </summary>
-public class ResultObjectEnumerableAdapter : IEnumerable<IResultObject> {
+public class ResultObjectEnumerableAdapter : IEnumerable<IResourceObject> {
   private readonly IEnumerator _enumerator;
+  private readonly WqlResourceContext _context;
 
-  protected ResultObjectEnumerableAdapter(IEnumerator enumerator) {
+  protected ResultObjectEnumerableAdapter(IEnumerator enumerator, WqlResourceContext context)
+  {
     _enumerator = enumerator;
+    _context = context;
   }
 
-  public IEnumerator<IResultObject> GetEnumerator() {
+  public IEnumerator<IResourceObject> GetEnumerator() {
     return EnumerateAndCast();
   }
 
@@ -22,14 +26,18 @@ public class ResultObjectEnumerableAdapter : IEnumerable<IResultObject> {
     return EnumerateAndCast();
   }
 
-  public static IEnumerable<IResultObject> FromResultObject(IResultObject resultObject) {
+  public static IEnumerable<IResourceObject> FromResultObject(IResultObject resultObject, WqlResourceContext context) {
     var enumerator = resultObject.GetEnumerator();
-    return new ResultObjectEnumerableAdapter(enumerator);
+    return new ResultObjectEnumerableAdapter(enumerator, context);
   }
 
-  private IEnumerator<IResultObject> EnumerateAndCast() {
+  private IEnumerator<IResourceObject> EnumerateAndCast() {
     while (_enumerator.MoveNext()) {
-      yield return (IResultObject) _enumerator.Current;
+      yield return WrapResultObject((IResultObject)_enumerator.Current) ;
     }
+  }
+
+  private IResourceObject WrapResultObject(IResultObject obj) {
+    return new ResultObjectAdapter(_context, obj);
   }
 }

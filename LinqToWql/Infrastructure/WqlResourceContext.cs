@@ -1,4 +1,5 @@
 ﻿using System.Reflection;
+using LinqToWql.Data;
 using LinqToWql.Language;
 using LinqToWql.Model;
 using Microsoft.ConfigurationManagement.ManagementProvider;
@@ -39,7 +40,7 @@ public abstract class WqlResourceContext : IDisposable {
   /// <typeparam name="T"></typeparam>
   /// <param name="resultObject"></param>
   /// <returns></returns>
-  public T CreateResourceInstance<T>(IResultObject resultObject) {
+  public T CreateResourceInstance<T>(IResourceObject resultObject) {
     return (T)Activator.CreateInstance(typeof(T), this, resultObject);
   }
 
@@ -50,16 +51,16 @@ public abstract class WqlResourceContext : IDisposable {
   /// </summary>
   /// <typeparam name="T"></typeparam>
   /// <returns></returns>
-  public IResultObject CreateObject<T>() where T : WqlResourceData<T> {
+  public IResourceObject CreateObject<T>() where T : WqlResourceData<T> {
     var resourceType = typeof(T);
     var resourceAttribute = resourceType.GetCustomAttribute<ResourceAttribute>();
     var embeddedResourceAttribute = resourceType.GetCustomAttribute<EmbeddedResourceAttribute>();
 
     if(embeddedResourceAttribute is not null) {
-     return Connection.CreateEmbeddedInstance(embeddedResourceAttribute.ClassName);
+     return Connection.CreateEmbeddedInstance(this, embeddedResourceAttribute.ClassName);
     }
 
-    return Connection.CreateInstance(resourceAttribute.ClassName);
+    return Connection.CreateInstance(this, resourceAttribute.ClassName);
   }
 
   public WqlResource<T> GetResource<T>() where T : WqlResourceData<T> {
