@@ -6,20 +6,21 @@ using LinqToWql.Test.Mocks.Stubs;
 namespace LinqToWql.Test.Infrastructure;
 
 public class WqlResourceContextTest {
+  private StubWqlResourceContext _sut = new ResourceContextBuilder()
+    .ConfigureConnection()
+    .DefineCreateInstance(() => new SmsCollection())
+    .Complete()
+    .Build();
+
   [Fact]
   public void Ctor_ReplacesGetterForProperties_WhenPropertiesAreResources() {
-    var sut = new StubWqlContext(new StubWqlContextOptions(null));
-
-    sut.SmsCollection.Should().NotBeNull();
-    sut.SmsCollection.Should().BeOfType<WqlResource<SmsCollection>>();
+    _sut.SmsCollection.Should().NotBeNull();
+    _sut.SmsCollection.Should().BeOfType<WqlResource<SmsCollection>>();
   }
 
   [Fact]
   public void CreateInstance_CreatesNewInstanceOfWqlResource_WhenTypeIsWqlResource() {
-    var resultObject = new MockResultObjectBuilder<SmsCollection>(() => new SmsCollection()).Build();
-    var sut = new StubWqlContext(new StubWqlContextOptions(resultObject));
-
-    var collection = sut.CreateResourceInstance<SmsCollection>();
+    var collection = _sut.CreateResourceInstance<SmsCollection>();
 
     collection.Should().BeOfType<SmsCollection>();
   }

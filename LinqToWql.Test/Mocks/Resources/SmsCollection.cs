@@ -1,4 +1,5 @@
-﻿using LinqToWql.Model;
+﻿using LinqToWql.Data;
+using LinqToWql.Model;
 
 namespace LinqToWql.Test.Mocks.Resources;
 
@@ -17,12 +18,24 @@ public partial class SmsCollection {
   private string _owner;
 
   [Property(Name = "Rules")]
-  private SmsCollectionRule _rules;
+  private ISmsCollectionRule _rules;
 
   [Property(Name = "SmsIds")]
   private IEnumerable<int> _smsIds;
 
-  public SmsCollection() : base(null, null) {
+  public ISmsCollectionRule Rules
+  {
+    get
+    {
+      return Resource.GetEmbeddedProperty<ISmsCollectionRule>("Rules");
+    }
+    set
+    {
+      Resource.SetEmbeddedProperty<ISmsCollectionRule>("Rules", (WqlResourceData<ISmsCollectionRule>)value.Resource);
+    }
+  }
+
+  public SmsCollection() : base((IResourceObject) null) {
   }
 
   public SmsCollection GetSelf() {

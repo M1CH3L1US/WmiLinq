@@ -6,9 +6,9 @@ using LinqToWql.Test.Mocks.Resources;
 
 namespace LinqToWql.Test.Language;
 
-public class WqlExpressionVisitorTest {
-  private static readonly WqlResource<SmsCollection> _resource =
-    MockResourceFactory<SmsCollection>.CreateWithResultValue(() => new SmsCollection());
+public class WqlExpressionVisitorTest
+{
+  private WqlResource<SmsCollection> _resource = new ResourceContextBuilder().BuildForResource<SmsCollection>();
 
   private static readonly WqlExpressionVisitor _sut = new();
 

@@ -15,8 +15,6 @@ internal class ResourcePropertyType {
 
   public string EnumerableType { get; private set; }
 
-  public WqlPropertyType WqlProperty{ get; private set; }
-
   public string RequiresNamespace { get; private set; } = "System";
 
   public ResourcePropertyType(ITypeSymbol typeSymbol) {
@@ -31,37 +29,12 @@ internal class ResourcePropertyType {
       var enumerableType = type.TypeArguments.First();
       EnumerableType = GetTypeNameAsString(enumerableType);
       IsResource = IsResourceType(enumerableType);
-      WqlProperty = ToSupportedPropertyType(enumerableType.ToString());
     }
     else {
-      WqlProperty = ToSupportedPropertyType(type.ToString());
       IsResource = IsResourceType(type);
     }
 
     TypeName = GetTypeNameAsString(type);
-  }
-
-  /// <summary>
-  /// Creates the field value to access
-  /// the resource property of the correct type.
-  /// 
-  /// IResultObject has different accessors:
-  /// StringValue, BooleanValue... some of which also have
-  /// an Array accessor StringArrayValue.
-  /// </summary>
-  /// <returns></returns>
-  public string GetResourceFieldName() {
-    var field = new StringBuilder();
-    
-    field.Append(WqlProperty.ToString());
-
-    if (IsEnumerable) {
-      field.Append("Array");
-    }
-
-    field.Append("Value");
-
-    return field.ToString();
   }
 
   public string GetWqlResourcePropertyType() {
@@ -83,35 +56,12 @@ internal class ResourcePropertyType {
   }
 
   private static bool IsResourceType(ITypeSymbol type) {
-    var isResource = type
+    var isResourceImplementation = type
         .GetAttributes()
         .Any(a => a.HasName(EmbeddedResourceAttributeName) || a.HasName(ResourceAttributeName));
 
-    return isResource;
-  }
+    var isResouceBase = type.Interfaces.Any(iface => iface.Name == "IWqlResourceBase");
 
-  private static WqlPropertyType ToSupportedPropertyType(string fullName)
-  {
-    return fullName switch
-    {
-      "string" or nameof(String) => WqlPropertyType.String,
-      "bool" or nameof(Boolean) => WqlPropertyType.Boolean,
-      "System.DateTime" or nameof(DateTime) => WqlPropertyType.DateTime,
-      "System.TimeSpan" or nameof(TimeSpan) => WqlPropertyType.TimeSpan,
-      "int" or nameof(Int32) => WqlPropertyType.Integer,
-      "object" or nameof(Object) => WqlPropertyType.Object,
-      "long" or nameof(Int64) => WqlPropertyType.Long,
-      _ => WqlPropertyType.Object
-    };
-  }
-
-  internal enum WqlPropertyType {
-    String,
-    DateTime,
-    Integer,
-    Long,
-    TimeSpan,
-    Boolean,
-    Object,
+    return isResourceImplementation || isResouceBase;
   }
 }

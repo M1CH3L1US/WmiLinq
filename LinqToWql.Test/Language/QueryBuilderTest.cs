@@ -12,8 +12,7 @@ public class QueryBuilderTest {
   private const string ResourceName = "SMS_Collection";
   private const string NewLine = "\r\n";
 
-  private static readonly WqlResource<SmsCollection> _resource =
-    MockResourceFactory<SmsCollection>.CreateWithResultValue(() => new SmsCollection());
+  private static readonly WqlResource<SmsCollection> _resource = MockResourceFactory.CreateEmpty<SmsCollection>();
 
   private static readonly Expression _root = Expression.Constant(_resource);
 

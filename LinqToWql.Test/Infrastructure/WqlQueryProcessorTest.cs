@@ -5,8 +5,7 @@ using LinqToWql.Test.Mocks.Resources;
 namespace LinqToWql.Test.Infrastructure;
 
 public class WqlQueryProcessorTest {
-  private static readonly WqlResource<SmsCollection> _resource =
-    MockResourceFactory<SmsCollection>.CreateWithResultValue(() => new SmsCollection());
+  private WqlResource<SmsCollection> _resource = new ResourceContextBuilder().BuildForResource<SmsCollection>();
 
   [Fact]
   public void Map_MapsIResultObjectToResource_WhenOutputTypeIsResource() {

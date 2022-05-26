@@ -67,15 +67,16 @@ public class ResourceSourceGenerator : ISourceGenerator {
     sb.AppendLine("using Microsoft.ConfigurationManagement.ManagementProvider;");
     sb.AppendLine("using LinqToWql.Model;");
     sb.AppendLine("using LinqToWql.Infrastructure;");
+    sb.AppendLine("using LinqToWql.Data;");
     sb.AppendLine($"namespace {classModel.ContainingNamespace};");
-    sb.AppendLine($"public partial class {classModel.Name} : LinqToWql.Model.WqlResourceData<{classModel.Name}> {{");
+    sb.AppendLine($"public partial class {classModel.Name} : WqlResourceData<{classModel.Name}>, IResource {{");
 
     return sb;
   }
 
   private void AddResourceDataImpl(StringBuilder resource, ITypeSymbol classModel) {
     resource.AppendLine(
-      $"public {classModel.Name}(WqlResourceContext context, IResultObject resource) : base(context, resource) {{  }}");
+      $"public {classModel.Name}(IResourceObject resource) : base(resource) {{  }}");
     resource.AppendLine($"public {classModel.Name}(WqlResourceContext context) : base(context) {{  }}");
   }
 
@@ -127,29 +128,36 @@ public class ResourceSourceGenerator : ISourceGenerator {
     }
   }
 
+  /*
+      Resource.GetEmbeddedProperty("");
+    Resource.SetEmbeddedProperty("", );
+    Resource.GetEmbeddedPropertyList("");
+    Resource.SetEmbeddedPropertyList();
+    Resource.GetProperty<string>("");
+    Resource.SetProperty<string>("", "");
+  */
   private void AddPropertyRegularField(ResourcePropertyBuilder propertyField, ResourcePropertyType propertyType) {
     propertyField.DefineProperty(propertyType.GetWqlResourcePropertyType());
 
     propertyField.DefineGetter(appendLine => { 
-      appendLine(@$"return ({propertyType.TypeName}) Resource[""{propertyField.PropertyName}""].{propertyType.GetResourceFieldName()};");
+      appendLine(@$"return Resource.GetProperty<{propertyType.TypeName}>(""{propertyField.PropertyName}"");");
     });
 
     propertyField.DefineSetter(appendLine => {
-      appendLine(@$"Resource[""{propertyField.PropertyName}""].{propertyType.GetResourceFieldName()} = value;");
+      appendLine(@$"return Resource.SetProperty<{propertyType.TypeName}>(""{propertyField.PropertyName}"", value);");
     });
   }
 
   private void AddPropertyEnumerable(ResourcePropertyBuilder propertyField, ResourcePropertyType propertyType)
   {
-    propertyField.DefineProperty($"IEnumerable<{propertyType.EnumerableType}>");
+    propertyField.DefineProperty(propertyType.TypeName);
 
     propertyField.DefineGetter(appendLine => {
-      appendLine(@$"var value = Resource[""{propertyField.PropertyName}""].{propertyType.GetResourceFieldName()} ?? Enumerable.Empty<{propertyType.EnumerableType}>();");
-      appendLine(@$"return value.Cast<{propertyType.EnumerableType}>();");
+      appendLine(@$"return Resource.GetArrayProperty<{propertyType.EnumerableType}>(""{propertyField.PropertyName}"");");
     });
 
     propertyField.DefineSetter(appendLine => {
-      appendLine(@$"Resource[""{propertyField.PropertyName}""].{propertyType.GetResourceFieldName()} = value.ToArray();");
+      appendLine(@$"Resource.SetArrayProperty<{propertyType.EnumerableType}>(""{propertyField.PropertyName}"", value);");
     });
   }
 
@@ -159,12 +167,11 @@ public class ResourceSourceGenerator : ISourceGenerator {
     propertyField.DefineProperty(propertyType.TypeName);
 
     propertyField.DefineGetter(appendLine => {
-      appendLine(@$"var item = Resource.GetSingleItem(""{propertyField.PropertyName}"");");
-      appendLine(@$"return Context.CreateResourceInstance<{propertyType.TypeName}>(item);");
+      appendLine(@$"return Resource.GetEmbeddedProperty<{propertyType.TypeName}>(""{propertyField.PropertyName}"");");
     });
 
     propertyField.DefineSetter(appendLine => {
-      appendLine(@$"Resource.SetSingleItem(""{propertyField.PropertyName}"", value.Resource);");
+      appendLine(@$"Resource.SetEmbeddedProperty<{propertyType.TypeName}>(""{propertyField.PropertyName}"", (WqlResourceData<{propertyType.TypeName}>) value.Resource);");
     });
   }
   private void AddPropertyEnumerableResource(ResourcePropertyBuilder propertyField, ResourcePropertyType propertyType) {

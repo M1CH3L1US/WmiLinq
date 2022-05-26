@@ -1,10 +1,11 @@
 ﻿using System.Collections;
+using LinqToWql.Data;
 using Microsoft.ConfigurationManagement.ManagementProvider;
 
 namespace LinqToWql.Test.Mocks.ResultObject;
 
 public class StubResultObject : IResultObject {
-  private readonly List<Dictionary<string, object>> _values;
+  private readonly List<ResourceObject> _values;
 
   public object UserDataObject { get; set; }
   public ConnectionManagerBase ConnectionManager { get; }
@@ -17,10 +18,10 @@ public class StubResultObject : IResultObject {
 
   public IQueryPropertyItem this[string name] {
     get {
-      _values.First().TryGetValue(name, out var value);
+      I.Options.Properties.TryGetValue(name, out var value);
       return new StubQueryPropertyItem(value);
     }
-    set => _values.First()[name] = value;
+    set => I.Options.Properties[name] = value;
   }
 
   public IResultObject Properties { get; set; }
@@ -36,12 +37,12 @@ public class StubResultObject : IResultObject {
   public List<IResultObject> GenericsArray { get; }
   public Guid UniqueIdentifier { get; }
 
-  public StubResultObject(Dictionary<string, object> value) {
-    _values = new List<Dictionary<string, object>> {value};
+  public StubResultObject(ResourceObject resourceObject) {
+    _values = new List<ResourceObject> { resourceObject };
   }
 
-  public StubResultObject(List<Dictionary<string, object>> values) {
-    _values = values;
+  public StubResultObject(List<ResourceObject> resourceObjects) {
+    _values = resourceObjects;
   }
 
   public int CompareTo(object? obj) {
@@ -56,7 +57,7 @@ public class StubResultObject : IResultObject {
   }
 
   public IEnumerator GetEnumerator() {
-    return _values.Select(x => new StubResultObject(new List<Dictionary<string, object>> {x})).GetEnumerator();
+    return _values.Select(x => new StubResultObject(x)).GetEnumerator();
   }
 
   public bool ContainsObjectClass(string type) {
@@ -92,7 +93,7 @@ public class StubResultObject : IResultObject {
   }
 
   public List<IResultObject> GetArrayItems(string propertyName) {
-    throw new NotImplementedException();
+    throw new NotImplementedException(); 
   }
 
   public void SetArrayItems(string propertyName, List<IResultObject> value) {
@@ -114,4 +115,6 @@ public class StubResultObject : IResultObject {
   public void SetQualifierValue(string qualifierName, object qualifierValue) {
     throw new NotImplementedException();
   }
+
+  private ResourceObject I => _values.First();
 }
