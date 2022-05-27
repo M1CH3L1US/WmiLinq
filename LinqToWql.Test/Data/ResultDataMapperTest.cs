@@ -1,12 +1,12 @@
 ﻿using LinqToWql.Infrastructure;
 using LinqToWql.Test.Mocks;
 using LinqToWql.Test.Mocks.Resources;
-using LinqToWql.Test.Mocks.Stubs;
 
 namespace LinqToWql.Test.Data;
 
 public class ResultDataMapperTest {
-  private WqlResource<SmsCollection> _resource = new ResourceContextBuilder().BuildForResource<SmsCollection>();
+  private readonly WqlResource<SmsCollection>
+    _resource = new ResourceContextBuilder().BuildForResource<SmsCollection>();
 
   [Fact]
   public void Map_MapsIResultObjectToResource_WhenOutputTypeIsResource() {
@@ -23,7 +23,7 @@ public class ResultDataMapperTest {
                    .Select(r => new {r.Name, r.CollectionId})
                    .Single();
 
-    instance.Name.Value.Should().NotBeNull();
+    instance.Name.Should().NotBeNull();
   }
 
   [Fact]
@@ -33,7 +33,7 @@ public class ResultDataMapperTest {
                    .Select(r => r.Name)
                    .Single();
 
-    instance.Value.Should().NotBeNull();
+    instance.Should().NotBeNull();
   }
 
   [Fact]

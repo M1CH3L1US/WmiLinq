@@ -1,6 +1,4 @@
-﻿using System.Diagnostics;
-using System.Text;
-using System.Text.RegularExpressions;
+﻿using System.Text;
 using Microsoft.CodeAnalysis;
 using Microsoft.CodeAnalysis.CSharp;
 using Microsoft.CodeAnalysis.CSharp.Syntax;
@@ -9,11 +7,11 @@ namespace LinqToWql.CodeGen;
 
 [Generator]
 public class ResourceSourceGenerator : ISourceGenerator {
-  public void Initialize(GeneratorInitializationContext context) {
-  }
-
   public const string ResourceAttributeName = "Resource";
   public const string EmbeddedResourceAttributeName = "EmbeddedResource";
+
+  public void Initialize(GeneratorInitializationContext context) {
+  }
 
   public void Execute(GeneratorExecutionContext context) {
     var compilation = context.Compilation;
@@ -27,10 +25,10 @@ public class ResourceSourceGenerator : ISourceGenerator {
 
       var withResourceAttr = classesInTree.Where(x => x.AttributeLists
                                                        .SelectMany(al => al.Attributes)
-                                                       .Any(attributeSyntax =>
-                                                       {
+                                                       .Any(attributeSyntax => {
                                                          var attributeName = attributeSyntax.Name.ToString();
-                                                         return attributeName == ResourceAttributeName || attributeName == EmbeddedResourceAttributeName;
+                                                         return attributeName == ResourceAttributeName ||
+                                                                attributeName == EmbeddedResourceAttributeName;
                                                        }));
 
       var classModels = withResourceAttr.Select(x => semanticModel.GetDeclaredSymbol(x))
@@ -55,7 +53,7 @@ public class ResourceSourceGenerator : ISourceGenerator {
     var usingStatements = usingStatementsToAdd.Select(u => $"using {u};");
     var usingStatementString = string.Join("\n", usingStatements);
     var resourceString = resource.ToString();
-    
+
     return usingStatementString + "\n" + resourceString;
   }
 
@@ -115,11 +113,14 @@ public class ResourceSourceGenerator : ISourceGenerator {
 
       if (propertyType.IsResource && propertyType.IsEnumerable) {
         AddPropertyEnumerableResource(propertyField, propertyType);
-      } else if(propertyType.IsResource) {
+      }
+      else if (propertyType.IsResource) {
         AddPropertyResource(propertyField, propertyType);
-      } else if(propertyType.IsEnumerable) {
+      }
+      else if (propertyType.IsEnumerable) {
         AddPropertyEnumerable(propertyField, propertyType);
-      } else {
+      }
+      else {
         AddPropertyRegularField(propertyField, propertyType);
       }
 
@@ -137,27 +138,26 @@ public class ResourceSourceGenerator : ISourceGenerator {
     Resource.SetProperty<string>("", "");
   */
   private void AddPropertyRegularField(ResourcePropertyBuilder propertyField, ResourcePropertyType propertyType) {
-    propertyField.DefineProperty(propertyType.GetWqlResourcePropertyType());
+    propertyField.DefineProperty(propertyType.TypeName);
 
-    propertyField.DefineGetter(appendLine => { 
+    propertyField.DefineGetter(appendLine => {
       appendLine(@$"return Resource.GetProperty<{propertyType.TypeName}>(""{propertyField.PropertyName}"");");
     });
 
     propertyField.DefineSetter(appendLine => {
-      appendLine(@$"return Resource.SetProperty<{propertyType.TypeName}>(""{propertyField.PropertyName}"", value);");
+      appendLine(@$"Resource.SetProperty<{propertyType.TypeName}>(""{propertyField.PropertyName}"", value);");
     });
   }
 
-  private void AddPropertyEnumerable(ResourcePropertyBuilder propertyField, ResourcePropertyType propertyType)
-  {
+  private void AddPropertyEnumerable(ResourcePropertyBuilder propertyField, ResourcePropertyType propertyType) {
     propertyField.DefineProperty(propertyType.TypeName);
 
     propertyField.DefineGetter(appendLine => {
-      appendLine(@$"return Resource.GetArrayProperty<{propertyType.EnumerableType}>(""{propertyField.PropertyName}"");");
+      appendLine(@$"return Resource.GetProperty<{propertyType.TypeName}>(""{propertyField.PropertyName}"");");
     });
 
     propertyField.DefineSetter(appendLine => {
-      appendLine(@$"Resource.SetArrayProperty<{propertyType.EnumerableType}>(""{propertyField.PropertyName}"", value);");
+      appendLine(@$"Resource.SetProperty<{propertyType.TypeName}>(""{propertyField.PropertyName}"", value);");
     });
   }
 
@@ -167,28 +167,27 @@ public class ResourceSourceGenerator : ISourceGenerator {
     propertyField.DefineProperty(propertyType.TypeName);
 
     propertyField.DefineGetter(appendLine => {
-      appendLine(@$"return Resource.GetEmbeddedProperty<{propertyType.TypeName}>(""{propertyField.PropertyName}"");");
+      appendLine(@$"return Resource.GetProperty<{propertyType.TypeName}>(""{propertyField.PropertyName}"");");
     });
 
     propertyField.DefineSetter(appendLine => {
-      appendLine(@$"Resource.SetEmbeddedProperty<{propertyType.TypeName}>(""{propertyField.PropertyName}"", (WqlResourceData<{propertyType.TypeName}>) value.Resource);");
+      appendLine(
+        @$"Resource.SetProperty<{propertyType.TypeName}>(""{propertyField.PropertyName}"", ({propertyType.TypeName}) value.Resource);");
     });
   }
+
   private void AddPropertyEnumerableResource(ResourcePropertyBuilder propertyField, ResourcePropertyType propertyType) {
     propertyField.DefineComment(AppendWqlResourceWarningComment);
 
     propertyField.DefineProperty($"List<{propertyType.EnumerableType}>");
 
     propertyField.DefineGetter(appendLine => {
-      appendLine($"return Resource");
-      appendLine(@$".GetArrayItems(""{propertyField.PropertyName}"")");
-      appendLine($".Select(item => Context.CreateResourceInstance<{propertyType.EnumerableType}>(item))");
-      appendLine($".ToList();");
+      appendLine("return Resource");
+      appendLine(@$".GetProperty<List<{propertyType.EnumerableType}>>(""{propertyField.PropertyName}"")");
     });
 
     propertyField.DefineSetter(appendLine => {
-      appendLine("var items = value.Select(resource => resource.Resource).ToList();");
-      appendLine($@"Resource.SetArrayItems(""{propertyField.PropertyName}"", items);");
+      appendLine($@"Resource.SetProperty<{propertyType.TypeName}>(""{propertyField.PropertyName}"", value);");
     });
   }
 
@@ -203,4 +202,3 @@ public class ResourceSourceGenerator : ISourceGenerator {
     resource.AppendLine("}");
   }
 }
-

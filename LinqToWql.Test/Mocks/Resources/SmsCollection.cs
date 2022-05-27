@@ -23,18 +23,6 @@ public partial class SmsCollection {
   [Property(Name = "SmsIds")]
   private IEnumerable<int> _smsIds;
 
-  public ISmsCollectionRule Rules
-  {
-    get
-    {
-      return Resource.GetEmbeddedProperty<ISmsCollectionRule>("Rules");
-    }
-    set
-    {
-      Resource.SetEmbeddedProperty<ISmsCollectionRule>("Rules", (WqlResourceData<ISmsCollectionRule>)value.Resource);
-    }
-  }
-
   public SmsCollection() : base((IResourceObject) null) {
   }
 

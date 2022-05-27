@@ -5,7 +5,11 @@ using LinqToWql.Test.Mocks.Resources;
 namespace LinqToWql.Test.Infrastructure;
 
 public class WqlQueryProcessorTest {
-  private WqlResource<SmsCollection> _resource = new ResourceContextBuilder().BuildForResource<SmsCollection>();
+  private readonly WqlResource<SmsCollection> _resource = new ResourceContextBuilder()
+                                                          .ConfigureQuery()
+                                                          .DefineQueryResult(() => new SmsCollection {Name = "Foo"})
+                                                          .Complete()
+                                                          .BuildForResource<SmsCollection>();
 
   [Fact]
   public void Map_MapsIResultObjectToResource_WhenOutputTypeIsResource() {

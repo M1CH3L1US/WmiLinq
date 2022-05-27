@@ -2,7 +2,6 @@
 using LinqToWql.Infrastructure;
 using LinqToWql.Language;
 using LinqToWql.Language.Expressions;
-using LinqToWql.Model;
 using LinqToWql.Test.Mocks;
 using LinqToWql.Test.Mocks.Resources;
 
@@ -194,7 +193,7 @@ public class QueryBuilderTest {
 
   [Fact]
   public void AppendWhere_CreatesValueQuery_WhenLambdaContainsClosureValueOfTypeWqlResourceProperty() {
-    WqlResourceProperty<string> closureValue = "Foo";
+    var closureValue = "Foo";
     var expressionTree = new WqlStatementBuilder(_root)
                          .AddWhereClauseFromLambda(Lambda<SmsCollection>(x => x.Name == closureValue))
                          .Build();

@@ -2,7 +2,6 @@
 using LinqToWql.Data;
 using LinqToWql.Language;
 using LinqToWql.Model;
-using Microsoft.ConfigurationManagement.ManagementProvider;
 
 namespace LinqToWql.Infrastructure;
 
@@ -25,7 +24,7 @@ public abstract class WqlResourceContext : IDisposable {
   }
 
   /// <summary>
-  /// Creates a new wrapped resource of type T
+  ///   Creates a new wrapped resource of type T
   /// </summary>
   /// <typeparam name="T"></typeparam>
   /// <returns></returns>
@@ -34,20 +33,20 @@ public abstract class WqlResourceContext : IDisposable {
   }
 
   /// <summary>
-  /// Creates a resource wrapper class of 
-  /// type T using the result object provided.
+  ///   Creates a resource wrapper class of
+  ///   type T using the result object provided.
   /// </summary>
   /// <typeparam name="T"></typeparam>
   /// <param name="resultObject"></param>
   /// <returns></returns>
   public T CreateResourceInstance<T>(IResourceObject resultObject) {
-    return (T)Activator.CreateInstance(typeof(T), this, resultObject);
+    return (T) Activator.CreateInstance(typeof(T), resultObject);
   }
 
   /// <summary>
-  /// Creates an IResultObject for the
-  /// resource or embedded resource defined
-  /// through the type parameter <see cref="T"/>.
+  ///   Creates an IResultObject for the
+  ///   resource or embedded resource defined
+  ///   through the type parameter <see cref="T" />.
   /// </summary>
   /// <typeparam name="T"></typeparam>
   /// <returns></returns>
@@ -56,8 +55,8 @@ public abstract class WqlResourceContext : IDisposable {
     var resourceAttribute = resourceType.GetCustomAttribute<ResourceAttribute>();
     var embeddedResourceAttribute = resourceType.GetCustomAttribute<EmbeddedResourceAttribute>();
 
-    if(embeddedResourceAttribute is not null) {
-     return Connection.CreateEmbeddedInstance(this, embeddedResourceAttribute.ClassName);
+    if (embeddedResourceAttribute is not null) {
+      return Connection.CreateEmbeddedInstance(this, embeddedResourceAttribute.ClassName);
     }
 
     return Connection.CreateInstance(this, resourceAttribute.ClassName);

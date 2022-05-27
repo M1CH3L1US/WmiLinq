@@ -1,7 +1,6 @@
 ﻿using System.Linq.Expressions;
 using LinqToWql.Language.Expressions;
 using LinqToWql.Language.Statements;
-using LinqToWql.Model;
 
 namespace LinqToWql.Language;
 
@@ -74,7 +73,7 @@ public class WqlStatementBuilder {
   private WqlExpression GetInnerMethodCallFromLambda(LambdaExpression lambda, MethodCallExpression methodCall) {
     var method = methodCall.Method;
 
-    if (method.DeclaringType != typeof(WqlResourcePropertyQueryExtensions)) {
+    if (method.DeclaringType != typeof(QueryPropertyExtensions)) {
       throw new NotSupportedException("Only methods on WqlResourceProperties are supported");
     }
 
@@ -84,9 +83,9 @@ public class WqlStatementBuilder {
     var propertyName = property.Member.Name;
 
     return method.Name switch {
-      nameof(WqlResourcePropertyQueryExtensions.IsA) =>
+      nameof(QueryPropertyExtensions.IsA) =>
         new IsAWqlExpression(propertyName, (string) argument.Value!),
-      nameof(WqlResourcePropertyQueryExtensions.Like) =>
+      nameof(QueryPropertyExtensions.Like) =>
         new LikeWqlExpression(propertyName, (string) argument.Value!),
       _ => throw new NotImplementedException()
     };
@@ -165,31 +164,6 @@ public class WqlStatementBuilder {
     var getValueLambda = Expression.Lambda<Func<object>>(objectMember);
     var valueGetter = getValueLambda.Compile();
 
-    var value = valueGetter();
-
-    if (!IsWqlResourceProperty(value)) {
-      return value;
-    }
-
-    return GetValueFromWqlResourceProperty(value);
-  }
-
-  private bool IsWqlResourceProperty(object obj) {
-    var objectType = obj.GetType();
-
-    if (!objectType.IsGenericType) {
-      return false;
-    }
-
-    return objectType.GetGenericTypeDefinition() == typeof(WqlResourceProperty<>);
-  }
-
-  private object GetValueFromWqlResourceProperty(object property) {
-    // We should have already determined that the type of `property`
-    // is WqlResourceProperty so we can just get the reflection property
-    // field and return its value.
-    return property.GetType()!
-                   .GetProperty(nameof(WqlResourceProperty<object>.Value))!
-                   .GetValue(property);
+    return valueGetter();
   }
 }
