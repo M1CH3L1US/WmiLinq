@@ -1,13 +1,13 @@
 ﻿using LinqToWql.Model;
-using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
 
-namespace LinqToWql.Test.Mocks;
+namespace LinqToWql.Test.Mocks.Resources;
 
 public interface ISmsCollectionRule : IWqlResourceBase<ISmsCollectionRule> {
+  [Property(Name = "Name")]
   public string Name { get; set; }
-  public Int16 Id { get; set; }
+
+  [Property(Name = "ID")]
+  public short Id { get; set; }
+
+  public string NonResourceProperty { get; set; }
 }

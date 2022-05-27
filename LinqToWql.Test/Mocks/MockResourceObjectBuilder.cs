@@ -1,18 +1,15 @@
 ﻿using System.Linq.Expressions;
-using System.Reflection;
 using LinqToWql.Data;
 using LinqToWql.Infrastructure;
 using LinqToWql.Model;
 using LinqToWql.Test.Mocks.ResultObject;
-using LinqToWql.Test.Mocks.Stubs;
-using Microsoft.ConfigurationManagement.ManagementProvider;
 
 namespace LinqToWql.Test.Mocks;
 
 public class MockResourceObjectBuilder<T> where T : IResource {
-  private readonly List<Expression<Func<T>>> _innerItems = new();
   private readonly List<MockResourceObjectBuilder<T>> _builders = new();
-  private ResourceObjectOptions _options = new();
+  private readonly List<Expression<Func<T>>> _innerItems = new();
+  private readonly ResourceObjectOptions _options = new();
 
   public MockResourceObjectBuilder() {
   }
@@ -20,20 +17,19 @@ public class MockResourceObjectBuilder<T> where T : IResource {
   public MockResourceObjectBuilder(Expression<Func<T>> generator) {
     _innerItems.Add(generator);
   }
-  
+
   public MockResourceObjectBuilder<T> WithDeleteMethod(Action deleteMethod) {
     _options.Delete = deleteMethod;
     return this;
   }
 
-  public MockResourceObjectBuilder<T> WithExecuteMethod(Func<string, Dictionary<string, object>, IResourceObject> executeMethod)
-  {
+  public MockResourceObjectBuilder<T> WithExecuteMethod(
+    Func<string, Dictionary<string, object>, IResourceObject> executeMethod) {
     _options.ExecuteMethod = executeMethod;
     return this;
   }
 
-  public MockResourceObjectBuilder<T> WithUpdateMethod(Action updateMethod)
-  {
+  public MockResourceObjectBuilder<T> WithUpdateMethod(Action updateMethod) {
     _options.Update = updateMethod;
     return this;
   }
@@ -58,13 +54,12 @@ public class MockResourceObjectBuilder<T> where T : IResource {
   }
 
   public List<IResourceObject> BuildAsQueryResult() {
-    if(_builders.Count != 0) {
+    if (_builders.Count != 0) {
       return _builders.Select(x => x.Build()).ToList();
     }
 
     return _innerItems
-      .Select(i => new MockResourceFactory().CreateResourceObject<T>(i))
-      .Cast<IResourceObject>()
-      .ToList();
+           .Select(i => MockResourceFactory.CreateResourceObject(i))
+           .ToList();
   }
 }

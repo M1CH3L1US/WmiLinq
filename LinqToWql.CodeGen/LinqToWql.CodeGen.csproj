@@ -25,4 +25,18 @@
       </Reference>
     </ItemGroup>
 
+  <PropertyGroup>
+    <GetTargetPathDependsOn>$(GetTargetPathDependsOn);GetDependencyTargetPaths</GetTargetPathDependsOn>
+  </PropertyGroup>
+  
+    <ItemGroup>
+      <ProjectReference GeneratePathProperty="true" PrivateAssets="all" Include="..\LinqToWql\LinqToWql.csproj" />
+    </ItemGroup>
+
+  <Target Name="GetDependencyTargetPaths">
+    <ItemGroup>
+      <TargetPathWithTargetPlatformMoniker Include="..\LinqToWql\bin\Release\netstandard2.0\LinqToWql.dll" IncludeRuntimeDependency="false" />
+    </ItemGroup>
+  </Target>
+
 </Project>

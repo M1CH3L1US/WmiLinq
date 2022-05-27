@@ -6,20 +6,27 @@ namespace LinqToWql.Test.Data;
 
 public class ResultDataMapperTest {
   private readonly WqlResource<SmsCollection>
-    _resource = new ResourceContextBuilder().BuildForResource<SmsCollection>();
+    _resource = new ResourceContextBuilder().ConfigureQuery()
+                                            .DefineQueryResult(() =>
+                                              new SmsCollection {
+                                                Name = "Collection",
+                                                Description = "Description"
+                                              })
+                                            .Complete()
+                                            .BuildForResource<SmsCollection>();
 
   [Fact]
   public void Map_MapsIResultObjectToResource_WhenOutputTypeIsResource() {
     var instance = _resource
       .Single(r => r.Name == "Collection");
 
-    instance.Should().BeOfType<SmsCollection>();
+    instance.Should().BeAssignableTo<SmsCollection>();
   }
 
   [Fact]
   public void Map_MapsIResultObjectToAnonymousObject_WhenOutputTypeIsAnonymousObject() {
     var instance = _resource
-                   .Where(r => r.Description == "Foo")
+                   .Where(r => r.Description == "Description")
                    .Select(r => new {r.Name, r.CollectionId})
                    .Single();
 
@@ -29,7 +36,7 @@ public class ResultDataMapperTest {
   [Fact]
   public void Map_MapsIResultObjectSingleProperty_WhenOutputTypeIsProperty() {
     var instance = _resource
-                   .Where(r => r.Description == "Foo")
+                   .Where(r => r.Description == "Description")
                    .Select(r => r.Name)
                    .Single();
 
@@ -42,6 +49,6 @@ public class ResultDataMapperTest {
 
     var selfInstance = instance.GetSelf();
 
-    selfInstance.Should().BeOfType<SmsCollection>();
+    selfInstance.Should().BeAssignableTo<SmsCollection>();
   }
 }

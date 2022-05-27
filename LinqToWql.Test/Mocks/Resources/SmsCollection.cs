@@ -5,23 +5,23 @@ namespace LinqToWql.Test.Mocks.Resources;
 
 [Resource(ClassName = "SMS_Collection")]
 public partial class SmsCollection {
-  [Property(Name = "CollectionId")]
-  private string _collectionId;
-
   [Property(Name = "Description")]
-  private string _description;
+  public virtual string Description { get; set; }
 
   [Property(Name = "Name")]
-  private string _name;
+  public virtual string Name { get; set; }
 
   [Property(Name = "Owner")]
-  private string _owner;
+  public virtual string Owner { get; set; }
 
   [Property(Name = "Rules")]
-  private ISmsCollectionRule _rules;
+  public virtual ISmsCollectionRule Rules { get; set; }
 
   [Property(Name = "SmsIds")]
-  private IEnumerable<int> _smsIds;
+  public virtual IEnumerable<int> SmsIds { get; set; }
+
+  [Property(Name = "CollectionId")]
+  public virtual string CollectionId { get; set; }
 
   public SmsCollection() : base((IResourceObject) null) {
   }

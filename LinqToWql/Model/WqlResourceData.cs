@@ -1,11 +1,10 @@
 ﻿using System.Reflection;
 using LinqToWql.Data;
 using LinqToWql.Infrastructure;
-using Microsoft.ConfigurationManagement.ManagementProvider;
 
 namespace LinqToWql.Model;
 
-public abstract class WqlResourceData<T> where T : WqlResourceData<T> {
+public abstract class WqlResourceData<T> : IResource where T : WqlResourceData<T> {
   protected readonly WqlResourceContext Context;
   public IResourceObject Resource { get; }
 
@@ -13,11 +12,12 @@ public abstract class WqlResourceData<T> where T : WqlResourceData<T> {
   ///   Creates a new WqlResourceData wrapper object
   ///   for <see cref="resource" />.
   /// </summary>
-  /// <param name="context"></param>
   /// <param name="resource"></param>
   public WqlResourceData(IResourceObject resource) {
     Context = resource.Context;
     Resource = resource;
+
+    ValidateProperties();
   }
 
   /// <summary>
@@ -26,9 +26,24 @@ public abstract class WqlResourceData<T> where T : WqlResourceData<T> {
   ///   using this instance.
   /// </summary>
   /// <param name="context"></param>
-  public WqlResourceData(WqlResourceContext context) {
-    Context = context;
-    Resource = context.CreateObject<T>();
+  public WqlResourceData(WqlResourceContext context) : this(context.CreateObject<T>()) {
+  }
+
+  private void ValidateProperties() {
+    var propertiesWithPropertyAttribute = GetType()
+                                          .GetProperties()
+                                          .Where(
+                                            property => property.GetCustomAttribute<PropertyAttribute>() is not null
+                                          );
+
+    foreach (var property in propertiesWithPropertyAttribute) {
+      var isPropertyVirtual = property.GetGetMethod().IsVirtual;
+
+      if (!isPropertyVirtual) {
+        throw new Exception($"Property ${property.Name} in {GetType().Name} is not virtual." +
+                            "Either remove the PropertyAttribute on the property or make it virtual");
+      }
+    }
   }
 
   /// <summary>
@@ -39,9 +54,10 @@ public abstract class WqlResourceData<T> where T : WqlResourceData<T> {
   /// <param name="command"></param>
   /// <param name="args"></param>
   /// <returns></returns>
-  protected T ExecuteMethod<T>(string command, params Tuple<string, dynamic>[] args) where T : IResource {
+  protected TResult ExecuteMethod<TResult>(string command, params Tuple<string, dynamic>[] args)
+    where TResult : IResource {
     var dictArgs = args.ToDictionary(x => x.Item1, x => (object) x.Item2);
-    return Resource.ExecuteMethod<T>(command, dictArgs);
+    return Resource.ExecuteMethod<TResult>(command, dictArgs);
   }
 
   protected Tuple<string, dynamic> Parameter(string name, dynamic value) {

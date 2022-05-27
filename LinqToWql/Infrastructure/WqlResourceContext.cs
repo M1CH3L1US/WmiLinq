@@ -6,16 +6,17 @@ using LinqToWql.Model;
 namespace LinqToWql.Infrastructure;
 
 public abstract class WqlResourceContext : IDisposable {
+  private static readonly WqlResourceProxyGenerator _generator = new();
   private readonly IWqlContextOptions _options;
+
+  private readonly IQueryProvider _queryProvider;
 
   public IWqlConnection Connection => _options.WqlConnection;
   public IWqlQueryProcessor QueryProcessor => _options.WqlQueryProcessor;
 
-  private IQueryProvider QueryProvider { get; }
-
   public WqlResourceContext(IWqlContextOptions options) {
     _options = options;
-    QueryProvider = MakeQueryProvider();
+    _queryProvider = MakeQueryProvider();
     MapResources();
   }
 
@@ -29,7 +30,8 @@ public abstract class WqlResourceContext : IDisposable {
   /// <typeparam name="T"></typeparam>
   /// <returns></returns>
   public T CreateResourceInstance<T>() where T : WqlResourceData<T> {
-    return (T) Activator.CreateInstance(typeof(T), this);
+    var resource = CreateObject<T>();
+    return CreateResourceInstance<T>(resource);
   }
 
   /// <summary>
@@ -37,10 +39,25 @@ public abstract class WqlResourceContext : IDisposable {
   ///   type T using the result object provided.
   /// </summary>
   /// <typeparam name="T"></typeparam>
-  /// <param name="resultObject"></param>
+  /// <param name="resource"></param>
   /// <returns></returns>
-  public T CreateResourceInstance<T>(IResourceObject resultObject) {
-    return (T) Activator.CreateInstance(typeof(T), resultObject);
+  public T CreateResourceInstance<T>(IResourceObject resource) {
+    return (T) CreateResourceInstance(typeof(T), resource);
+  }
+
+  /// <summary>
+  ///   Creates a resource wrapper of <see cref="type" />
+  ///   using the resource object provided.
+  /// </summary>
+  /// <param name="type"></param>
+  /// <param name="resource"></param>
+  /// <returns></returns>
+  public IResource CreateResourceInstance(Type type, IResourceObject resource) {
+    if (type.IsInterface) {
+      return (IResource) _generator.CreateResourceInterfaceProxy(type, resource);
+    }
+
+    return (IResource) _generator.CreateResourceProxy(type, resource);
   }
 
   /// <summary>
@@ -63,7 +80,7 @@ public abstract class WqlResourceContext : IDisposable {
   }
 
   public WqlResource<T> GetResource<T>() where T : WqlResourceData<T> {
-    return new WqlResource<T>(QueryProvider);
+    return new WqlResource<T>(_queryProvider);
   }
 
   private IQueryProvider MakeQueryProvider() {
@@ -104,7 +121,7 @@ public abstract class WqlResourceContext : IDisposable {
 
   private object MakeResourceInstance(PropertyInfo resourceProperty) {
     var genericType = MakeGenericResourceType(resourceProperty);
-    var resourceInstance = Activator.CreateInstance(genericType, QueryProvider, null);
+    var resourceInstance = Activator.CreateInstance(genericType, _queryProvider, null);
 
     return resourceInstance;
   }

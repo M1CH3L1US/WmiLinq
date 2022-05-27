@@ -69,12 +69,12 @@ public class ResourceConnectionBuilder {
   }
 
   public ResourceConnectionBuilder DefineCreateInstance(Expression<Func<IResource>> createInstanceResult) {
-    _builder.CreateInstanceResult = new MockResourceFactory().CreateResourceObject(createInstanceResult);
+    _builder.CreateInstanceResult = MockResourceFactory.CreateResourceObject(createInstanceResult);
     return this;
   }
 
   public ResourceConnectionBuilder DefineCreateEmbeddedInstance(Expression<Func<IResource>> createInstanceResult) {
-    _builder.CreateEmbeddedInstanceResult = new MockResourceFactory().CreateResourceObject(createInstanceResult);
+    _builder.CreateEmbeddedInstanceResult = MockResourceFactory.CreateResourceObject(createInstanceResult);
     return this;
   }
 
@@ -97,7 +97,7 @@ public class ResourceQueryProcessorBuilder {
   }
 
   public ResourceQueryProcessorBuilder DefineQueryResult(params Expression<Func<IResource>>[] results) {
-    _builder.QueryResult = results.Select(x => new MockResourceFactory().CreateResourceObject(x)).ToList();
+    _builder.QueryResult = results.Select(x => MockResourceFactory.CreateResourceObject(x)).ToList();
     return this;
   }
 

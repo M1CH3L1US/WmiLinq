@@ -2,6 +2,7 @@
 using System.Runtime.Serialization;
 using LinqToWql.Data;
 using LinqToWql.Infrastructure;
+using LinqToWql.Model;
 using LinqToWql.Test.Mocks.ResultObject;
 
 namespace LinqToWql.Test.Mocks;
@@ -11,17 +12,24 @@ public class MockResourceFactory {
     return (WqlResource<T>) FormatterServices.GetUninitializedObject(typeof(WqlResource<T>));
   }
 
-  public IResourceObject CreateResourceObject<T>(Expression<Func<T>> initExpression) {
-    var options = GetValuesFromMemberInitExpression(initExpression.Body);
+  public static IResourceObject
+    CreateResourceObject<T>(Expression<Func<T>> initExpression, WqlResourceContext context) {
+    var options = CreateOptionsFromMemberInitExpression(initExpression.Body);
+    options.Context = context;
     return new ResourceObject(options);
   }
 
-  public IResourceObject CreateResourceObject(Expression<Func<IResourceObject>> initExpression) {
-    var options = GetValuesFromMemberInitExpression(initExpression.Body);
+  public static IResourceObject CreateResourceObject<T>(Expression<Func<T>> initExpression) where T : IResource {
+    var options = CreateOptionsFromMemberInitExpression(initExpression.Body);
     return new ResourceObject(options);
   }
 
-  private ResourceObjectOptions GetValuesFromMemberInitExpression(Expression expression) {
+  public static IResourceObject CreateResourceObject(Expression<Func<IResource>> initExpression) {
+    var options = CreateOptionsFromMemberInitExpression(initExpression.Body);
+    return new ResourceObject(options);
+  }
+
+  private static ResourceObjectOptions CreateOptionsFromMemberInitExpression(Expression expression) {
     var options = new ResourceObjectOptions();
     if (expression is not MemberInitExpression memberInitExpression) {
       return options;
@@ -36,14 +44,14 @@ public class MockResourceFactory {
     return options;
   }
 
-  private void AddMemberDefToOptions(MemberAssignment assignment, ResourceObjectOptions options) {
+  private static void AddMemberDefToOptions(MemberAssignment assignment, ResourceObjectOptions options) {
     var propertyName = assignment.Member.Name;
     var value = GetValueFromInitExpression(assignment.Expression);
 
     options.Properties.Add(propertyName, value);
   }
 
-  private object GetValueFromInitExpression(Expression expression) {
+  private static object GetValueFromInitExpression(Expression expression) {
     ConstantExpression value;
     // Conversion from WqlResourceProperty<T> to T
     if (expression is UnaryExpression {NodeType: ExpressionType.Convert} unary) {

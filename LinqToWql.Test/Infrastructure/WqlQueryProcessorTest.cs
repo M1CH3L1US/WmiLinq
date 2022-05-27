@@ -18,7 +18,7 @@ public class WqlQueryProcessorTest {
 
     foreach (var instance in instances) {
       count++;
-      instance.Should().BeOfType<SmsCollection>();
+      instance.Should().BeAssignableTo<SmsCollection>();
     }
 
     count.Should().Be(1);

@@ -107,7 +107,7 @@ public class ResultObjectAdapterTest {
   [Fact]
   public void GetProperty_WrapsInnerResultObjectToResource_WhenTypeIsResource() {
     AssertInvocationForEmbeddedProperty(
-      sut => sut.GetProperty<SmsCollection>("Collection").Should().BeOfType<SmsCollection>()
+      sut => sut.GetProperty<SmsCollection>("Collection").Should().BeAssignableTo<SmsCollection>()
     );
   }
 

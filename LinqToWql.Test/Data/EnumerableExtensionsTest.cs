@@ -6,7 +6,8 @@ public class EnumerableExtensionsTest {
   [Fact]
   public void Empty_CreatesEmptyEnumerableOfDesiredType() {
     var enumerable = EnumerableExtensions.RuntimeEmpty(typeof(string));
-
-    enumerable.Should().BeOfType<IEnumerable<string>>();
+    //This actually returns an EmptyPartition<string> so we need to use
+    // IsAssignableTo instead of IsOfType
+    enumerable.Should().BeAssignableTo<IEnumerable<string>>();
   }
 }

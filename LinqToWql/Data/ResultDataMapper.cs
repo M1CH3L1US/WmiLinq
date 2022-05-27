@@ -1,5 +1,4 @@
 ﻿using LinqToWql.Language;
-using Microsoft.ConfigurationManagement.ManagementProvider;
 
 namespace LinqToWql.Data;
 
@@ -27,7 +26,7 @@ public class ResultDataMapper<TResult> {
   }
 
   private object ApplyTypeMappingInternal(IResourceObject resultObject) {
-    var resource = MapResultObjectToResource(resultObject);
+    var resource = MapResourceObjectToResource(resultObject);
 
     if (_parseOptions.ShouldSelectSingleProperty) {
       return MapToSingleResourceProperty(resource);
@@ -67,7 +66,7 @@ public class ResultDataMapper<TResult> {
     return genericTypeName.Contains("AnonymousType");
   }
 
-  private object MapResultObjectToResource(IResourceObject resultObject) {
-    return Activator.CreateInstance(_resourceType, _parseOptions.Context, resultObject);
+  private object MapResourceObjectToResource(IResourceObject resultObject) {
+    return _parseOptions.Context.CreateResourceInstance(_resourceType, resultObject);
   }
 }
