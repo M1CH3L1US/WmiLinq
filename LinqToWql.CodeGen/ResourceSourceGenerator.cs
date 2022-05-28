@@ -1,7 +1,4 @@
 ﻿using System.Text;
-using LinqToWql.Data;
-using LinqToWql.Infrastructure;
-using LinqToWql.Model;
 using Microsoft.CodeAnalysis;
 using Microsoft.CodeAnalysis.CSharp.Syntax;
 
@@ -9,9 +6,16 @@ namespace LinqToWql.CodeGen;
 
 [Generator]
 public class ResourceSourceGenerator : ISourceGenerator {
-  private readonly Type _baseResourceAttribute = typeof(BaseResourceAttribute);
-  private readonly Type _embeddedResourceAttribute = typeof(EmbeddedResourceAttribute);
-  private readonly Type _resourceAttribute = typeof(ResourceAttribute);
+  private const string BaseResourceAttribute = "BaseResourceAttribute";
+  private const string EmbeddedResourceAttribute = "EmbeddedResourceAttribute";
+  private const string ResourceAttribute = "ResourceAttribute";
+
+  private const string DataNamespace = "LinqToWql.Data";
+  private const string ModelNamespace = "LinqToWql.Model";
+  private const string InfrastructureNamespace = "LinqToWql.Infrastructure";
+
+  private const string ResourceTypeName = "WqlResourceData";
+  private const string ResourceBaseTypeName = "IWqlResourceBase";
 
   public void Initialize(GeneratorInitializationContext context) {
   }
@@ -62,20 +66,20 @@ public class ResourceSourceGenerator : ISourceGenerator {
   ) {
     var attributes = typeDefinition.GetAttributes().Select(x => x.AttributeClass!).ToList();
 
-    bool HasAttribute(Type type) {
-      return attributes.Any(attribute => HasSameNameAndNamespace(attribute, type));
+    bool HasAttribute(string type) {
+      return attributes.Any(attribute => attribute.Name == type);
     }
 
     var resourceBuilder = new StringBuilder();
     string resourceDeclaration;
 
-    if (HasAttribute(_resourceAttribute)) {
+    if (HasAttribute(ResourceAttribute)) {
       resourceDeclaration = AddResourceClass(typeDefinition);
     }
-    else if (HasAttribute(_embeddedResourceAttribute)) {
+    else if (HasAttribute(EmbeddedResourceAttribute)) {
       resourceDeclaration = AddResourceClass(typeDefinition);
     }
-    else if (HasAttribute(_baseResourceAttribute)) {
+    else if (HasAttribute(BaseResourceAttribute)) {
       resourceDeclaration = AddBaseResourceClass(typeDefinition);
     }
     else {
@@ -83,20 +87,16 @@ public class ResourceSourceGenerator : ISourceGenerator {
       return false;
     }
 
-    resourceBuilder.AppendLine($"using {typeof(IResource).Namespace};");
-    resourceBuilder.AppendLine($"using {typeof(WqlResourceContext).Namespace};");
-    resourceBuilder.AppendLine($"using {typeof(IResourceObject).Namespace};");
+    resourceBuilder.AppendLine($"using {DataNamespace};");
+    resourceBuilder.AppendLine($"using {ModelNamespace};");
+    resourceBuilder.AppendLine($"using {InfrastructureNamespace};");
+    resourceBuilder.AppendLine();
     resourceBuilder.AppendLine($"namespace {typeDefinition.ContainingNamespace};");
     resourceBuilder.AppendLine();
     resourceBuilder.AppendLine(resourceDeclaration);
 
     declaration = new KeyValuePair<string, string>(typeDefinition.Name, resourceBuilder.ToString());
     return true;
-  }
-
-  private bool HasSameNameAndNamespace(ISymbol typeSymbol, Type type) {
-    return typeSymbol.Name == type.Name
-           && typeSymbol.ContainingNamespace.ToString() == type.Namespace;
   }
 
   private string AddBaseResourceClass(ITypeSymbol interfaceModel) {
@@ -106,7 +106,7 @@ public class ResourceSourceGenerator : ISourceGenerator {
 
     var declaration = new StringBuilder();
     declaration.AppendLine(
-      $"public partial interface {interfaceModel.Name} : {GetNameOfGenericType(typeof(IWqlResourceBase<>))}<{interfaceModel.Name}> {{");
+      $"public partial interface {interfaceModel.Name} : {ResourceBaseTypeName}<{interfaceModel.Name}> {{");
     declaration.AppendLine("}");
     return declaration.ToString();
   }
@@ -118,7 +118,7 @@ public class ResourceSourceGenerator : ISourceGenerator {
 
     var declaration = new StringBuilder();
     declaration.AppendLine(
-      $"public partial class {classModel.Name} : {GetNameOfGenericType(typeof(WqlResourceData<>))}<{classModel.Name}> {{");
+      $"public partial class {classModel.Name} : {ResourceTypeName}<{classModel.Name}> {{");
     AddResourceDataImpl(declaration, classModel);
     declaration.AppendLine("}");
 
@@ -129,15 +129,5 @@ public class ResourceSourceGenerator : ISourceGenerator {
     resource.AppendLine(
       $"public {classModel.Name}(IResourceObject resource) : base(resource) {{  }}");
     resource.AppendLine($"public {classModel.Name}(WqlResourceContext context) : base(context) {{  }}");
-  }
-
-  private string GetNameOfGenericType(Type type) {
-    var name = type.Name;
-
-    if (!type.IsGenericType) {
-      return name;
-    }
-
-    return name.Substring(0, name.IndexOf('`'));
   }
 }
