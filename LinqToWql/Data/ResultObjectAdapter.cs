@@ -29,9 +29,8 @@ internal class ResultObjectAdapter : IResourceObject {
     _wrappedObject.Delete();
   }
 
-  public T ExecuteMethod<T>(string name, Dictionary<string, object> parameters) where T : IResource {
-    var value = _wrappedObject.ExecuteMethod(name, parameters);
-    return WrapToResource<T>(value);
+  public T ExecuteMethod<T>(string name, Dictionary<string, object> parameters) {
+    return (T) _wrappedObject.ExecuteMethod(name, parameters);
   }
 
   public T GetProperty<T>(string name) {

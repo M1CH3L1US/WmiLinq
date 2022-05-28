@@ -1,5 +1,4 @@
 ﻿using LinqToWql.Infrastructure;
-using LinqToWql.Model;
 
 namespace LinqToWql.Data;
 
@@ -21,5 +20,5 @@ public interface IResourceObject {
 
   public void Update();
   public void Delete();
-  public T ExecuteMethod<T>(string name, Dictionary<string, object> parameters) where T : IResource;
+  public T ExecuteMethod<T>(string name, Dictionary<string, object> parameters);
 }

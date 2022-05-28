@@ -1,6 +1,5 @@
 ﻿using LinqToWql.Data;
 using LinqToWql.Infrastructure;
-using LinqToWql.Model;
 
 namespace LinqToWql.Test.Mocks.ResultObject;
 
@@ -26,10 +25,9 @@ public class ResourceObject : IResourceObject {
     Options.Delete();
   }
 
-  public T ExecuteMethod<T>(string name, Dictionary<string, object> parameters) where T : IResource {
+  public T ExecuteMethod<T>(string name, Dictionary<string, object> parameters) {
     return Context.CreateResourceInstance<T>(Options.ExecuteMethod(name, parameters));
   }
-
 
   public T GetResourceObject<T>() {
     return (T) (object) new StubResultObject(this);
