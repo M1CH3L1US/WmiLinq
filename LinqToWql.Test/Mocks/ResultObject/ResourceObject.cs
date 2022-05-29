@@ -43,7 +43,7 @@ public class ResourceObjectOptions {
   public Action Delete { get; set; } = () => { };
 
   public Func<string, Dictionary<string, object>, IResourceObject> ExecuteMethod { get; set; } =
-    (string str, Dictionary<string, object> param) => default;
+    (_, _) => default;
 
   public Action Update { get; set; } = () => { };
 

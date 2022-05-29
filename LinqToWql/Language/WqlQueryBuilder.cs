@@ -20,7 +20,7 @@ public class WqlQueryBuilder {
 
   private readonly Dictionary<string, ExpressionChainType> _whereClauses = new();
 
-  public readonly QueryResultParseOptions ParseOptions = new();
+  public readonly QueryResultParseOptions ParseOptions;
 
   public ConstantExpression WqlResourceExpression { get; set; }
 
@@ -32,8 +32,9 @@ public class WqlQueryBuilder {
                                                       .GetGenericArguments()
                                                       .Single();
 
-  public WqlQueryBuilder(WqlStatement source) {
+  public WqlQueryBuilder(WqlStatement source, WqlResourceContext context) {
     _source = source;
+    ParseOptions = new QueryResultParseOptions(context);
   }
 
   public string Build(out QueryResultParseOptions parseOptions) {

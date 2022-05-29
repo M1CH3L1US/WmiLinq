@@ -4,6 +4,7 @@ using LinqToWql.Language;
 using LinqToWql.Language.Expressions;
 using LinqToWql.Test.Mocks;
 using LinqToWql.Test.Mocks.Resources;
+using Moq;
 
 namespace LinqToWql.Test.Language;
 
@@ -13,12 +14,15 @@ public class QueryBuilderTest {
 
   private static readonly WqlResource<SmsCollection> _resource = MockResourceFactory.CreateEmpty<SmsCollection>();
 
+  private static readonly WqlResourceContext _context =
+    new Mock<WqlResourceContext>(new Mock<WqlContextOptions>(new Mock<IWqlConnection>().Object).Object).Object;
+
   private static readonly Expression _root = Expression.Constant(_resource);
 
   [Fact]
   public void GetResourceName_GetsTheResourceNameFromTheQuery() {
     var expressionTree = new WqlStatementBuilder(_root).Build();
-    var sut = new WqlQueryBuilder(expressionTree);
+    var sut = new WqlQueryBuilder(expressionTree, _context);
 
     // We need to traverse the tree first
     // to find the resource
@@ -31,7 +35,7 @@ public class QueryBuilderTest {
   [Fact]
   public void AppendSelect_CreatesQueryWithSelectStart_WhenQueryIsEmpty() {
     var expressionTree = new WqlStatementBuilder(_root).Build();
-    var sut = new WqlQueryBuilder(expressionTree);
+    var sut = new WqlQueryBuilder(expressionTree, _context);
     var result = sut.Build(out _);
 
     result.Should().Be("SELECT *"
@@ -47,7 +51,7 @@ public class QueryBuilderTest {
                            Lambda<SmsCollection>(x => x.Name))
                          .Build();
 
-    var sut = new WqlQueryBuilder(expressionTree);
+    var sut = new WqlQueryBuilder(expressionTree, _context);
     var result = sut.Build(out _);
 
     result.Should().Be("SELECT Name"
@@ -63,7 +67,7 @@ public class QueryBuilderTest {
                            Lambda<SmsCollection>(x => new {x.Name, x.Description}))
                          .Build();
 
-    var sut = new WqlQueryBuilder(expressionTree);
+    var sut = new WqlQueryBuilder(expressionTree, _context);
     var result = sut.Build(out _);
 
     result.Should().Be("SELECT Name, Description"
@@ -83,7 +87,7 @@ public class QueryBuilderTest {
                            Lambda<SmsCollection>(x => x.Name))
                          .Build();
 
-    var sut = new WqlQueryBuilder(expressionTree);
+    var sut = new WqlQueryBuilder(expressionTree, _context);
     var result = sut.Build(out _);
 
     result.Should().Be("SELECT Name, Description"
@@ -98,7 +102,7 @@ public class QueryBuilderTest {
                          .AddWhereClauseFromLambda(Lambda<SmsCollection>(x => x.Name == "Test"))
                          .Build();
 
-    var sut = new WqlQueryBuilder(expressionTree);
+    var sut = new WqlQueryBuilder(expressionTree, _context);
     var result = sut.Build(out _);
 
     result.Should().Be("SELECT *"
@@ -119,7 +123,7 @@ public class QueryBuilderTest {
                          .AddWhereClauseFromLambda(Lambda<SmsCollection>(x => x.Description == "Test"))
                          .Build();
 
-    var sut = new WqlQueryBuilder(expressionTree);
+    var sut = new WqlQueryBuilder(expressionTree, _context);
     var result = sut.Build(out _);
 
     result.Should().Be("SELECT *"
@@ -143,7 +147,7 @@ public class QueryBuilderTest {
                            ExpressionChainType.Or)
                          .Build();
 
-    var sut = new WqlQueryBuilder(expressionTree);
+    var sut = new WqlQueryBuilder(expressionTree, _context);
     var result = sut.Build(out _);
 
     result.Should().Be("SELECT *"
@@ -162,7 +166,7 @@ public class QueryBuilderTest {
                          .AddWhereClauseFromLambda(Lambda<SmsCollection>(x => x.Name.Like("%Foo%")))
                          .Build();
 
-    var sut = new WqlQueryBuilder(expressionTree);
+    var sut = new WqlQueryBuilder(expressionTree, _context);
     var result = sut.Build(out _);
 
     result.Should().Be("SELECT *"
@@ -180,7 +184,7 @@ public class QueryBuilderTest {
                          .AddWhereClauseFromLambda(Lambda<SmsCollection>(x => x.Name == closureValue))
                          .Build();
 
-    var sut = new WqlQueryBuilder(expressionTree);
+    var sut = new WqlQueryBuilder(expressionTree, _context);
     var result = sut.Build(out _);
 
     result.Should().Be("SELECT *"
@@ -198,7 +202,7 @@ public class QueryBuilderTest {
                          .AddWhereClauseFromLambda(Lambda<SmsCollection>(x => x.Name == closureValue))
                          .Build();
 
-    var sut = new WqlQueryBuilder(expressionTree);
+    var sut = new WqlQueryBuilder(expressionTree, _context);
     var result = sut.Build(out _);
 
     result.Should().Be("SELECT *"

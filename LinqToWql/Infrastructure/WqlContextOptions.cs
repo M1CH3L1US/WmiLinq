@@ -1,13 +1,13 @@
-﻿using Microsoft.ConfigurationManagement.ManagementProvider;
+﻿using LinqToWql.Language;
 
 namespace LinqToWql.Infrastructure;
 
 public class WqlContextOptions : IWqlContextOptions {
-  public IWqlConnection WqlConnection { get; }
-  public IWqlQueryProcessor WqlQueryProcessor { get; }
+  public IWqlConnection Connection { get; }
+  public IWqlQueryRunner QueryRunner { get; }
 
-  public WqlContextOptions(ConnectionManagerBase connectionManagerBase) {
-    WqlConnection = new WqlConnectionAdapter(connectionManagerBase);
-    WqlQueryProcessor = new WqlQueryProcessorAdapter(connectionManagerBase.QueryProcessor);
+  public WqlContextOptions(IWqlConnection connection) {
+    Connection = connection;
+    QueryRunner = new WqlQueryRunner(connection.QueryProcessor);
   }
 }

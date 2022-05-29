@@ -12,8 +12,8 @@ public class ResourceContextBuilder {
   public Dictionary<string, Func<WqlResourceContext, string, string, Dictionary<string, object>, IResourceObject>>
     ExecuteMethodFuncs = new();
 
-  public IResourceObject CreateInstanceResult { get; set; }
-  public IResourceObject CreateEmbeddedInstanceResult { get; set; }
+  public IResourceObject? CreateInstanceResult { get; set; }
+  public IResourceObject? CreateEmbeddedInstanceResult { get; set; }
   public List<IResourceObject> QueryResult { get; set; } = new();
 
   public ResourceConnectionBuilder ConfigureConnection() {
@@ -31,7 +31,8 @@ public class ResourceContextBuilder {
       ExecuteMethodFuncs = ExecuteMethodFuncs
     };
     var queryProcessor = new StubWqlQueryProcessor();
-    var contextOptions = new StubWqlContextOptions {WqlConnection = connection, WqlQueryProcessor = queryProcessor};
+    var queryRunner = new WqlQueryRunner(queryProcessor);
+    var contextOptions = new StubWqlContextOptions {Connection = connection, QueryRunner = queryRunner};
     var context = new StubWqlResourceContext(contextOptions);
 
     SetContext(context);
@@ -43,7 +44,9 @@ public class ResourceContextBuilder {
 
   public WqlResource<T> BuildForResource<T>() {
     var context = Build();
-    return new WqlResource<T>(new WqlQueryProvider(new WqlQueryRunner(context)));
+    var queryProcessor = new StubWqlQueryProcessor();
+    queryProcessor.QueryResult = QueryResult;
+    return new WqlResource<T>(new WqlQueryProvider(context, new WqlQueryRunner(queryProcessor)));
   }
 
   private void SetContext(WqlResourceContext context) {
@@ -55,7 +58,7 @@ public class ResourceContextBuilder {
       ((ResourceObject) CreateEmbeddedInstanceResult).Context = context;
     }
 
-    if (QueryResult != null) {
+    if (QueryResult.Count != 0) {
       QueryResult.ForEach(x => ((ResourceObject) x).Context = context);
     }
   }

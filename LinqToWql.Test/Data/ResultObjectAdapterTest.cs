@@ -3,6 +3,7 @@ using LinqToWql.Data;
 using LinqToWql.Infrastructure;
 using LinqToWql.Test.Mocks.Resources;
 using LinqToWql.Test.Mocks.ResultObject;
+using LinqToWql.Test.Mocks.Stubs;
 using Microsoft.ConfigurationManagement.ManagementProvider;
 using Moq;
 using Xunit.Sdk;
@@ -189,7 +190,7 @@ public class ResultObjectAdapterTest {
     resultObjectMock.Setup(o => o.GetSingleItem(It.IsAny<string>())).Returns(itemMock.Object);
     resultObjectMock.Setup(o => o.GetArrayItems(It.IsAny<string>())).Returns(new List<IResultObject> {itemMock.Object});
 
-    var contextMock = new Mock<WqlResourceContext>(null);
+    var contextMock = new Mock<WqlResourceContext>(new StubWqlContextOptions());
     var sut = new ResultObjectAdapter(contextMock.Object, resultObjectMock.Object);
 
     accessAction(sut);

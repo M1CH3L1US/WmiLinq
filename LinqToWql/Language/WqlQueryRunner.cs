@@ -6,15 +6,15 @@ using LinqToWql.Language.Statements;
 namespace LinqToWql.Language;
 
 public class WqlQueryRunner : IWqlQueryRunner {
-  private readonly WqlResourceContext _context;
+  private readonly IWqlQueryProcessor _queryProcessor;
 
-  public WqlQueryRunner(WqlResourceContext context) {
-    _context = context;
+  public WqlQueryRunner(IWqlQueryProcessor queryProcessor) {
+    _queryProcessor = queryProcessor;
   }
 
-  public T Execute<T>(Expression query) {
-    var queryString = MakeQueryString(query, out var parseOptions);
-    var queryResult = _context.QueryProcessor.ExecuteQuery(queryString, parseOptions);
+  public T Execute<T>(Expression query, WqlResourceContext context) {
+    var queryString = MakeQueryString(query, context, out var parseOptions);
+    var queryResult = _queryProcessor.ExecuteQuery(queryString, parseOptions);
 
     // The ToList call ensures that the enumerations of the items have taken place
     // such that we no longer rely on the enumerator of IResultObject that might
@@ -29,13 +29,14 @@ public class WqlQueryRunner : IWqlQueryRunner {
       //  Enumerable.Cast[TResult] because we cannot cast
       //  List[object] or IEnumerable[object] to T,
       //  which is IEnumerable[TResult]
-      return (T) ((IEnumerable<object>)mappedResultObject).RuntimeCast(enumerableType);
+      return (T) ((IEnumerable<object>) mappedResultObject).RuntimeCast(enumerableType);
     }
 
-    return (T)mappedResultObject;
+    return (T) mappedResultObject;
   }
 
-  private string MakeQueryString(Expression query, out QueryResultParseOptions parseOptions) {
+  private string MakeQueryString(Expression query, WqlResourceContext context,
+    out QueryResultParseOptions parseOptions) {
     var visitor = new WqlExpressionVisitor();
     var wqlExpressionTree = visitor.Visit(query) as WqlStatement;
 
@@ -43,11 +44,10 @@ public class WqlQueryRunner : IWqlQueryRunner {
       ThrowNotSupported(query);
     }
 
-    var wqlBuilder = new WqlQueryBuilder(wqlExpressionTree);
+    var wqlBuilder = new WqlQueryBuilder(wqlExpressionTree, context);
 
     var queryStatement = wqlBuilder.Build(out var options);
     parseOptions = options;
-    parseOptions.Context = _context;
     return queryStatement;
   }
 

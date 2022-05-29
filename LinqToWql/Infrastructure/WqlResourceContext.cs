@@ -11,12 +11,12 @@ public abstract class WqlResourceContext : IDisposable {
 
   private readonly IQueryProvider _queryProvider;
 
-  public IWqlConnection Connection => _options.WqlConnection;
-  public IWqlQueryProcessor QueryProcessor => _options.WqlQueryProcessor;
+  public IWqlConnection Connection => _options.Connection;
+  public IWqlQueryRunner QueryRunner => _options.QueryRunner;
 
   public WqlResourceContext(IWqlContextOptions options) {
     _options = options;
-    _queryProvider = MakeQueryProvider();
+    _queryProvider = new WqlQueryProvider(this, QueryRunner);
     MapResources();
   }
 
@@ -81,11 +81,6 @@ public abstract class WqlResourceContext : IDisposable {
 
   public WqlResource<T> GetResource<T>() where T : WqlResourceData<T> {
     return new WqlResource<T>(_queryProvider);
-  }
-
-  private IQueryProvider MakeQueryProvider() {
-    var queryRunner = new WqlQueryRunner(this);
-    return new WqlQueryProvider(queryRunner);
   }
 
   private void MapResources() {

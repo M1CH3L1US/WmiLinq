@@ -3,12 +3,14 @@ using LinqToWql.Infrastructure;
 using LinqToWql.Model;
 using LinqToWql.Test.Mocks;
 using LinqToWql.Test.Mocks.Resources;
+using LinqToWql.Test.Mocks.Stubs;
 using Moq;
 
 namespace LinqToWql.Test.Infrastructure;
 
 public class WqlResourceProxyGeneratorTest {
-  private static readonly WqlResourceContext _context = new Mock<WqlResourceContext>(null).Object;
+  private static readonly WqlResourceContext
+    _context = new Mock<WqlResourceContext>(new StubWqlContextOptions()).Object;
 
   private readonly WqlResourceProxyGenerator _proxyGenerator = new();
 

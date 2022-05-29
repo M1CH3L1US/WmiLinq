@@ -4,13 +4,19 @@ using LinqToWql.Language;
 
 namespace LinqToWql.Infrastructure;
 
+/// <summary>
+///   A wrapper class for <see cref="IWqlQueryRunner" />, implementing
+///   IQueryProvider to support LINQ query execution.
+/// </summary>
 public class WqlQueryProvider : IQueryProvider {
   private static readonly MethodInfo _createQueryMethod = GetGenericMethod(nameof(CreateQuery));
   private static readonly MethodInfo _executeMethod = GetGenericMethod(nameof(Execute));
+  private readonly WqlResourceContext _context;
   private readonly IWqlQueryRunner _runner;
 
-  public WqlQueryProvider(IWqlQueryRunner wqlQueryRunner) {
-    _runner = wqlQueryRunner;
+  public WqlQueryProvider(WqlResourceContext context, IWqlQueryRunner runner) {
+    _context = context;
+    _runner = runner;
   }
 
   public IQueryable CreateQuery(Expression expression) {
@@ -28,7 +34,7 @@ public class WqlQueryProvider : IQueryProvider {
   }
 
   public T Execute<T>(Expression expression) {
-    return _runner.Execute<T>(expression);
+    return _runner.Execute<T>(expression, _context);
   }
 
   private static MethodInfo GetGenericMethod(string name) {

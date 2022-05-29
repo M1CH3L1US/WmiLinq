@@ -1,14 +1,9 @@
 ﻿using LinqToWql.Infrastructure;
-using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
+using LinqToWql.Language;
 
 namespace LinqToWql.Test.Mocks.Stubs;
 
-public class StubWqlContextOptions : IWqlContextOptions
-{
-  public IWqlConnection WqlConnection { get; set; }
-  public IWqlQueryProcessor WqlQueryProcessor { get; set; }
+public class StubWqlContextOptions : IWqlContextOptions {
+  public IWqlConnection Connection { get; set; }
+  public IWqlQueryRunner QueryRunner { get; set; }
 }

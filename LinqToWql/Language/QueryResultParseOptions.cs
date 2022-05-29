@@ -4,8 +4,8 @@ namespace LinqToWql.Language;
 
 public class QueryResultParseOptions {
   private readonly List<Func<IEnumerable<object>, object?>> _resultProcessors = new();
+  public WqlResourceContext Context;
   public IEnumerable<Func<IEnumerable<object>, object?>> ResultProcessors => _resultProcessors;
-  public WqlResourceContext Context { get; set; }
 
   /// <summary>
   ///   If property is true, the query result will be parsed
@@ -20,6 +20,10 @@ public class QueryResultParseOptions {
   ///   was created.
   /// </summary>
   public Type ResourceType { get; set; }
+
+  public QueryResultParseOptions(WqlResourceContext context) {
+    Context = context;
+  }
 
   /// <summary>
   ///   Add a post processor function for the query result.
